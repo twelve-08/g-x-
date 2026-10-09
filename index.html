@@ -1,7 +1,297 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Untitled</title><style>html,body{height:100%;margin:0;background:#0b0c0e;overflow:hidden}body{display:flex;align-items:center;justify-content:center}canvas{image-rendering:pixelated;background:#000}#go{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#dfe3ea;font:600 20px system-ui;background:#0b0c0ecc;cursor:pointer}</style></head><body><canvas id="c"></canvas><div id="go">Click to play</div>
-<script type="application/json" id="gx-data">{"settings":{"stageW":480,"stageH":360,"bg":"#1b1d22","autoPhysics":true},"assets":{},"objects":[{"id":"global","name":"Global","type":"global","parent":null,"x":0,"y":0,"z":0,"rotation":0,"rectLength":40,"rectHeight":40,"cRadius":20,"color":"#478cbf","visible":true,"textures":[],"sounds":[],"data":{"score":0},"scripts":[]},{"id":"orqak1uo","name":"Player","type":"rectangle","parent":null,"x":-80,"y":0,"z":0,"rotation":0,"rectLength":48,"rectHeight":48,"cRadius":20,"color":"#f2a65a","visible":true,"textures":[],"sounds":[],"data":{},"scripts":[{"name":"movement","code":"// Arrow keys move this object. Press Play to try it.\non start\n  print(hello from g(x))\n  indefinitely\n    if \u003ckey (left arrow) down?> then\n      edit att.x = (att.x - 3)\n    end\n    if \u003ckey (right arrow) down?> then\n      edit att.x = (att.x + 3)\n    end\n    if \u003ckey (up arrow) down?> then\n      edit att.y = (att.y + 3)\n    end\n    if \u003ckey (down arrow) down?> then\n      edit att.y = (att.y - 3)\n    end\n  end\n"}]},{"id":"onihdzmc","name":"Wave","type":"circle","parent":null,"x":-200,"y":60,"z":0,"rotation":0,"rectLength":40,"rectHeight":40,"cRadius":14,"color":"#6ecb8b","visible":true,"textures":[],"sounds":[],"data":{},"scripts":[{"name":"wave","code":"// Moves in a sine wave.\non start\n  edit att.x = -200\n  indefinitely\n    edit att.x = (att.x + 1)\n    edit att.y = (60 * sin(att.x * 2))\n    if \u003c(att.x) greater than (220)> then\n      edit att.x = -220\n    end\n  end\n"}]}]}</script>
-<script>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>g(x) Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: menubar on top, three docks (objects | workspace | inspector), console strip at the bottom. */
+:root {
+  --bg0:#e3e6eb; --bg1:#f0f2f5; --bg2:#e5e8ed; --bg3:#d6dae2; --line:#c3c9d3;
+  --fg:#1c2128; --fg2:#566070; --fg3:#808a99;
+  --accent:#478cbf; --accent-fg:#fff;
+  --accent-soft:color-mix(in srgb, var(--accent) 20%, transparent);
+  --ok:#2e9e5b; --warn:#b7791f; --err:#d14343;
+  --view:#cfd4dc; --grid:rgba(0,0,0,.08);
+  --ui:13px;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --c-kw:#8a4bbf; --c-ev:#c0392b; --c-att:#1d7f9b; --c-num:#b7611f; --c-cm:#8a94a3; --c-br:#7a8594;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg0:#14161a; --bg1:#1c1f25; --bg2:#252a32; --bg3:#2f3540; --line:#0d0f12;
+  --fg:#dfe3ea; --fg2:#9aa3b0; --fg3:#6c7684;
+  --view:#20242b; --grid:rgba(255,255,255,.06);
+  --c-kw:#c792ea; --c-ev:#ff7b72; --c-att:#79c0ff; --c-num:#f2a65a; --c-cm:#667085; --c-br:#8b95a5;
+  color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --bg0:#14161a; --bg1:#1c1f25; --bg2:#252a32; --bg3:#2f3540; --line:#0d0f12;
+  --fg:#dfe3ea; --fg2:#9aa3b0; --fg3:#6c7684;
+  --view:#20242b; --grid:rgba(255,255,255,.06);
+  --c-kw:#c792ea; --c-ev:#ff7b72; --c-att:#79c0ff; --c-num:#f2a65a; --c-cm:#667085; --c-br:#8b95a5;
+  color-scheme:dark; }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg0);color:var(--fg);font:var(--ui)/1.4 var(--sans);overflow:hidden;user-select:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:var(--bg2);border:1px solid var(--line);border-radius:4px;padding:3px 9px;cursor:pointer}
+button:hover{background:var(--bg3)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+button.primary:hover{filter:brightness(1.1)}
+button.ghost{background:transparent;border-color:transparent}
+button.ghost:hover{background:var(--bg3)}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=text],input[type=number],select,textarea{background:var(--bg0);border:1px solid var(--line);border-radius:4px;padding:3px 6px;min-width:0;user-select:text}
+input[type=number]{font-variant-numeric:tabular-nums}
+input[type=color]{padding:0;width:34px;height:24px;border:1px solid var(--line);border-radius:4px;background:var(--bg0)}
+input[type=range]{accent-color:var(--accent)}
+input[type=checkbox]{accent-color:var(--accent)}
+#app{display:grid;grid-template-rows:38px 1fr 26px;height:100%;min-width:0}
+#top{display:flex;align-items:center;gap:4px;padding:0 8px;background:var(--bg1);border-bottom:1px solid var(--line);min-width:0}
+.logo{font:600 15px var(--mono);color:var(--accent);padding:0 8px 0 2px;letter-spacing:-.02em}
+.menu{position:relative}
+.menu>button{background:transparent;border-color:transparent}
+.menu.open>button,.menu>button:hover{background:var(--bg3)}
+.dropdown{display:none;position:absolute;top:100%;left:0;z-index:50;min-width:230px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.menu.open .dropdown{display:block}
+.dropdown button{display:flex;justify-content:space-between;gap:20px;width:100%;text-align:left;background:transparent;border:0;padding:5px 8px}
+.dropdown button:hover{background:var(--accent);color:var(--accent-fg)}
+.dropdown button kbd{color:var(--fg3);font:11px var(--mono)}
+.dropdown button:hover kbd{color:inherit}
+.dropdown hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.tabs{display:flex;gap:2px;margin:0 auto;background:var(--bg0);border-radius:6px;padding:2px}
+.tabs button{background:transparent;border-color:transparent;padding:3px 14px}
+.tabs button[aria-selected=true]{background:var(--bg3);color:var(--fg);box-shadow:inset 0 -2px 0 var(--accent)}
+.tabs button[disabled]{text-decoration:line-through}
+.runbar{display:flex;gap:4px}
+#btnPlay{background:var(--ok);color:#fff;border-color:transparent}
+#btnStop{background:var(--err);color:#fff;border-color:transparent}
+#main{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,1fr) minmax(240px,300px);min-height:0}
+.dock{display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--bg1);border-right:1px solid var(--line)}
+.dock.right{border-right:0;border-left:1px solid var(--line)}
+.panel{display:flex;flex-direction:column;min-height:0;min-width:0}
+.panel.grow{flex:1 1 0}
+.panel.half{flex:0 0 38%;border-top:1px solid var(--line)}
+.ph{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg2);border-bottom:1px solid var(--line);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2)}
+.ph .sp{flex:1}
+.ph button{padding:1px 7px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:400}
+.pb{overflow:auto;min-height:0;flex:1}
+.tree{list-style:none;margin:0;padding:4px}
+.tree li{margin:0}
+.row{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.row:hover{background:var(--bg3)}
+.row.sel{background:var(--accent-soft);box-shadow:inset 2px 0 0 var(--accent)}
+.row .nm{overflow:hidden;text-overflow:ellipsis;flex:1}
+.row .ico{width:14px;height:14px;flex:none;display:inline-block;border:2px solid currentColor;border-radius:2px;opacity:.9}
+.ico.circle{border-radius:50%}.ico.sprite{border-style:dashed}.ico.empty{border-style:dotted}.ico.global{border-radius:3px;background:currentColor}
+.row .eye{opacity:.5}
+.row .tag{font:10px var(--mono);color:var(--fg3)}
+#center{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg0)}
+.ws{display:none;flex:1;min-height:0;min-width:0}
+.ws.on{display:flex}
+#vpWrap{position:relative;flex:1;min-width:0;background:var(--view)}
+#vp{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.vptools{position:absolute;left:8px;top:8px;display:flex;gap:4px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:3px}
+.vptools .info{padding:3px 8px;color:var(--fg2);font:11px var(--mono)}
+.vphint{position:absolute;left:10px;bottom:8px;color:var(--fg3);font-size:11px;pointer-events:none}
+.insp{padding:6px 8px;display:flex;flex-direction:column;gap:8px}
+.sec{border:1px solid var(--line);border-radius:6px;background:var(--bg0)}
+.sec>summary{cursor:pointer;padding:5px 8px;font-weight:600;font-size:12px;background:var(--bg2);border-radius:6px;list-style:none}
+.sec[open]>summary{border-bottom:1px solid var(--line);border-radius:6px 6px 0 0}
+.sec>summary::before{content:"▸ ";color:var(--fg3)}.sec[open]>summary::before{content:"▾ "}
+.sec .body{padding:8px;display:grid;grid-template-columns:92px minmax(0,1fr);gap:6px 8px;align-items:center}
+.sec .body.flow{display:flex;flex-direction:column;align-items:stretch}
+.sec label{color:var(--fg2)}
+.sec .body input[type=text],.sec .body input[type=number],.sec .body select{width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}
+.thumb{position:relative;border:1px solid var(--line);border-radius:4px;background:var(--bg1);padding:3px;text-align:center;font-size:10px;overflow:hidden;cursor:pointer}
+.thumb img{display:block;width:100%;height:42px;object-fit:contain;image-rendering:pixelated;background:repeating-conic-gradient(var(--bg3) 0 25%,transparent 0 50%) 0 0/10px 10px}
+.thumb .x{position:absolute;top:0;right:0;padding:0 4px;border-radius:0 0 0 4px;background:var(--err);color:#fff;border:0;display:none;font-size:11px}
+.thumb:hover .x{display:block}
+.thumb span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kv{display:grid;grid-template-columns:1fr 1fr 22px;gap:4px;margin-bottom:4px}
+.muted{color:var(--fg2)}.small{font-size:11px}
+.empty{padding:14px;color:var(--fg3);text-align:center}
+/* script workspace */
+#scriptWs{flex-direction:row}
+.sidelist{width:176px;flex:none;background:var(--bg1);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.edcol{flex:1;min-width:0;display:flex;flex-direction:column}
+.edbar{display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--bg2);border-bottom:1px solid var(--line)}
+.edbar input{width:160px}
+.editor{position:relative;flex:1;min-height:0;display:flex;background:var(--bg0);font:13px/20px var(--mono)}
+.gutter{flex:none;width:44px;padding:8px 6px 8px 0;text-align:right;color:var(--fg3);overflow:hidden;background:var(--bg1);border-right:1px solid var(--line);white-space:pre}
+.gutter span{display:block}.gutter .bad{color:#fff;background:var(--err);display:block}
+.codewrap{position:relative;flex:1;min-width:0}
+.codewrap pre,.codewrap textarea{position:absolute;inset:0;margin:0;padding:8px 10px;font:inherit;border:0;white-space:pre;overflow:auto;tab-size:2;letter-spacing:0}
+.codewrap pre{pointer-events:none;color:var(--fg);overflow:hidden}
+.codewrap textarea{background:transparent;color:transparent;caret-color:var(--fg);resize:none;outline:none;border-radius:0}
+.t-kw{color:var(--c-kw)}.t-ev{color:var(--c-ev);font-weight:500}.t-att{color:var(--c-att)}.t-num{color:var(--c-num)}.t-cm{color:var(--c-cm);font-style:italic}.t-br{color:var(--c-br)}
+.diag{max-height:96px;overflow:auto;background:var(--bg1);border-top:1px solid var(--line);padding:4px 8px;font:12px var(--mono)}
+.diag .e{color:var(--err)}.diag .ok{color:var(--ok)}
+.palette{width:236px;flex:none;background:var(--bg1);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.palette details{border-bottom:1px solid var(--line)}
+.palette summary{cursor:pointer;padding:5px 8px;font-weight:600;font-size:12px}
+.palette button.snip{display:block;width:100%;text-align:left;font:11.5px var(--mono);background:transparent;border:0;padding:2px 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.palette button.snip:hover{background:var(--accent-soft)}
+/* texture maker */
+#texWs{flex-direction:row}
+.texside{width:200px;flex:none;background:var(--bg1);border-right:1px solid var(--line);padding:8px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.tools button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg)}
+.texstage{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;background:var(--view);overflow:auto;padding:16px}
+#texCanvas{image-rendering:pixelated;background:repeating-conic-gradient(var(--bg3) 0 25%,transparent 0 50%) 0 0/16px 16px;box-shadow:0 0 0 1px var(--line),0 8px 28px rgba(0,0,0,.25);cursor:crosshair;touch-action:none}
+.swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
+.swatches button{height:18px;padding:0;border-radius:3px}
+/* game */
+#gameWs{flex-direction:column;align-items:center;justify-content:center;background:#0b0c0e;position:relative}
+#game{max-width:100%;max-height:100%;image-rendering:pixelated;background:#000;box-shadow:0 0 0 1px #333}
+.gamebar{position:absolute;top:8px;left:8px;color:#aab;font:11px var(--mono)}
+/* bottom panel */
+#bottom{position:relative;background:var(--bg1);border-top:1px solid var(--line);display:flex;flex-direction:column}
+#bottomHead{display:flex;align-items:center;gap:4px;padding:2px 8px;font-size:12px}
+#bottomHead button{padding:0 8px;background:transparent;border-color:transparent}
+#bottomHead button[aria-selected=true]{background:var(--bg3)}
+#bottomHead .sp{flex:1}
+#bottomHead .status{color:var(--fg2);font:11px var(--mono)}
+#bottomBody{display:none;position:absolute;left:0;right:0;bottom:26px;height:200px;background:var(--bg1);border-top:1px solid var(--line);overflow:auto;padding:6px 10px;z-index:20;font:12px var(--mono);user-select:text}
+#bottom.open #bottomBody{display:block}
+#bottomBody .l{white-space:pre-wrap}.l.error{color:var(--err)}.l.warn{color:var(--warn)}.l.sys{color:var(--fg3)}
+.bak{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid var(--line);font-family:var(--sans)}
+.bak .sp{flex:1}
+/* modals + toast */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal.on{display:flex}
+.card{background:var(--bg1);border:1px solid var(--line);border-radius:8px;width:min(560px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.card h2{margin:0;padding:12px 16px;font-size:15px;background:var(--bg2);border-bottom:1px solid var(--line);display:flex;align-items:center}
+.card h2 span{flex:1}
+.card .cb{padding:14px 16px;display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px 12px;align-items:center;user-select:text}
+.card .cb.block{display:block}
+.card .cb h3{margin:14px 0 4px;font-size:13px}.card .cb p{margin:4px 0;color:var(--fg2)}
+.card code{font:12px var(--mono);background:var(--bg0);padding:1px 4px;border-radius:3px}
+.card pre{font:12px/1.5 var(--mono);background:var(--bg0);padding:8px 10px;border-radius:6px;overflow:auto;margin:6px 0}
+.sw{display:flex;gap:6px;flex-wrap:wrap}
+.sw button{width:24px;height:24px;border-radius:50%;padding:0;border:2px solid var(--bg1);box-shadow:0 0 0 1px var(--line)}
+#toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:var(--bg3);color:var(--fg);border:1px solid var(--line);padding:7px 14px;border-radius:6px;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:90vw}
+#toast.on{display:block}
+#toast button{margin-left:10px}
+@media (max-width: 980px){ #main{grid-template-columns:170px minmax(0,1fr) 210px} .palette{display:none} .tabs button{padding:3px 8px} }
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <span class="logo">g(x)</span>
+    <div class="menu" data-menu="project"><button>Project</button><div class="dropdown">
+      <button data-act="new">New project</button>
+      <button data-act="open">Open from computer… <kbd>Ctrl+O</kbd></button>
+      <button data-act="save">Save to computer <kbd>Ctrl+S</kbd></button>
+      <hr><button data-act="backupNow">Back up now</button>
+      <button data-act="showBackups">Restore from backup…</button>
+      <hr><button data-act="export">Export playable HTML…</button>
+      <button data-act="settings">Project &amp; editor settings…</button>
+    </div></div>
+    <div class="menu" data-menu="edit"><button>Edit</button><div class="dropdown">
+      <button data-act="undo">Undo <kbd>Ctrl+Z</kbd></button>
+      <button data-act="redo">Redo <kbd>Ctrl+Y</kbd></button>
+      <hr><button data-act="addRect">Add rectangle</button>
+      <button data-act="addCircle">Add circle</button>
+      <button data-act="addSprite">Add sprite</button>
+      <button data-act="addEmpty">Add empty object</button>
+      <hr><button data-act="dup">Duplicate <kbd>Ctrl+D</kbd></button>
+      <button data-act="del">Delete <kbd>Del</kbd></button>
+    </div></div>
+    <div class="menu" data-menu="help"><button>Help</button><div class="dropdown">
+      <button data-act="learn">Learn Integral</button>
+      <button data-act="about">About g(x)</button>
+    </div></div>
+    <nav class="tabs" role="tablist" aria-label="Workspace">
+      <button role="tab" data-ws="vp" aria-selected="true">Scene</button>
+      <button role="tab" data-ws="script" aria-selected="false">Script</button>
+      <button role="tab" data-ws="tex" aria-selected="false">Textures</button>
+      <button role="tab" data-ws="game" aria-selected="false">Game</button>
+      <button role="tab" disabled title="3D mode is planned. Every object already carries a z value for it.">3D</button>
+    </nav>
+    <div class="runbar">
+      <button id="btnPlay" title="Run (F5)">▶ Play</button>
+      <button id="btnStop" title="Stop (F8)" disabled>■ Stop</button>
+    </div>
+    <button class="ghost" data-act="settings" title="Settings">⚙</button>
+  </header>
+
+  <div id="main">
+    <aside class="dock">
+      <section class="panel grow">
+        <div class="ph"><span>Objects</span><span class="sp"></span><button data-act="addRect" title="Add object">+ Add</button></div>
+        <div class="pb"><ul class="tree" id="tree"></ul></div>
+      </section>
+      <section class="panel half">
+        <div class="ph"><span>Assets</span><span class="sp"></span><button id="btnUpTex">+ Image</button><button id="btnUpSnd">+ Sound</button></div>
+        <div class="pb" id="assetList"></div>
+      </section>
+    </aside>
+    <main id="center">
+      <div class="ws on" id="vpWs"><div id="vpWrap">
+        <canvas id="vp" tabindex="0" aria-label="Scene viewport"></canvas>
+        <div class="vptools"><button id="zoomFit">Fit</button><button id="zoomOut">−</button><button id="zoomIn">+</button><span class="info" id="vpInfo"></span></div>
+        <div class="vphint">Drag to move · wheel to zoom · Space or right-drag to pan · arrows nudge · Shift = 10px</div>
+      </div></div>
+      <div class="ws" id="scriptWs">
+        <div class="sidelist"><div class="ph"><span>Scripts</span><span class="sp"></span><button id="addScript">+ New</button></div><div class="pb" id="scriptList"></div></div>
+        <div class="edcol">
+          <div class="edbar"><span class="muted">Name</span><input type="text" id="scriptName" aria-label="Script name"><span class="sp" style="flex:1"></span><button id="delScript">Delete script</button></div>
+          <div class="editor"><div class="gutter" id="gutter"></div><div class="codewrap"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Integral script"></textarea></div></div>
+          <div class="diag" id="diag"></div>
+        </div>
+        <div class="palette"><div class="ph"><span>Blocks</span></div><div class="pb" id="palette"></div></div>
+      </div>
+      <div class="ws" id="texWs">
+        <div class="texside">
+          <div class="muted small">Pixel painter</div>
+          <div class="tools" id="texTools"></div>
+          <div class="two"><label class="muted small">Color<br><input type="color" id="texColor" value="#ff6b3d"></label><label class="muted small">Brush<br><input type="number" id="texBrush" min="1" max="16" value="1"></label></div>
+          <div class="swatches" id="swatches"></div>
+          <div class="two"><label class="muted small">Size<br><select id="texSize"><option>16</option><option>32</option><option selected>64</option><option>128</option><option>256</option></select></label><label class="muted small">Zoom<br><select id="texZoom"><option value="4">4×</option><option value="6">6×</option><option value="8" selected>8×</option><option value="12">12×</option><option value="16">16×</option></select></label></div>
+          <div class="two"><button id="texUndo">Undo</button><button id="texRedo">Redo</button><button id="texFlipH">Flip ↔</button><button id="texFlipV">Flip ↕</button><button id="texClear">Clear</button><button id="texGrid">Grid</button></div>
+          <label class="muted small">Name<br><input type="text" id="texName" value="texture1" style="width:100%"></label>
+          <button class="primary" id="texSave">Save as texture</button>
+          <label class="small muted"><input type="checkbox" id="texUse" checked> Add to selected object</label>
+          <label class="small muted"><input type="checkbox" id="texFit" checked> Resize object to fit</label>
+          <button id="texImport">Paint over an image…</button>
+        </div>
+        <div class="texstage"><canvas id="texCanvas"></canvas></div>
+      </div>
+      <div class="ws" id="gameWs"><canvas id="game"></canvas><div class="gamebar" id="gameBar">Press Play to run the project.</div></div>
+    </main>
+    <aside class="dock right">
+      <div class="ph"><span>Inspector</span></div>
+      <div class="pb"><div class="insp" id="insp"></div></div>
+    </aside>
+  </div>
+
+  <footer id="bottom">
+    <div id="bottomBody"></div>
+    <div id="bottomHead">
+      <button data-btab="out" aria-selected="true">Output</button>
+      <button data-btab="bak" aria-selected="false">Backups</button>
+      <span class="sp"></span><span class="status" id="status"></span>
+    </div>
+  </footer>
+</div>
+
+<div class="modal" id="mSettings"><div class="card" role="dialog" aria-label="Settings"><h2><span>Settings</span><button class="ghost" data-close>✕</button></h2><div class="cb" id="settingsBody"></div></div></div>
+<div class="modal" id="mLearn"><div class="card" role="dialog" aria-label="Learn Integral"><h2><span>Learn Integral</span><button class="ghost" data-close>✕</button></h2><div class="cb block" id="learnBody"></div></div></div>
+<div class="modal" id="mExport"><div class="card" role="dialog" aria-label="Export"><h2><span>Export playable HTML</span><button class="ghost" data-close>✕</button></h2><div class="cb block" id="exportBody"></div></div></div>
+<div id="toast" role="status"></div>
+<input type="file" id="fileOpen" accept=".gxproj,.json,application/json" hidden>
+<input type="file" id="fileImg" accept="image/*" multiple hidden>
+<input type="file" id="fileSnd" accept="audio/*" multiple hidden>
+<input type="file" id="fileTexImport" accept="image/*" hidden>
+<script id="src-lang">
 /* Integral language: tokenizer, expression parser, statement parser.
    Pure functions, no DOM. Exposes GX.Lang.compile(src) */
 (function (root) {
@@ -545,7 +835,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = GX.Lang;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
-<script>
+<script id="src-runtime">
 /* g(x) runtime: entities, Integral interpreter, simple physics, Casso layer, renderer. */
 (function (root) {
 'use strict';
@@ -1025,5 +1315,819 @@ if (typeof module !== 'undefined' && module.exports) module.exports = Runtime;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
-<script>(async function(){var P=JSON.parse(document.getElementById("gx-data").textContent),cv=document.getElementById("c"),W=P.settings.stageW,H=P.settings.stageH;cv.width=W;cv.height=H;var cx=cv.getContext("2d");function fit(){var s=Math.min(innerWidth/W,innerHeight/H);cv.style.width=Math.floor(W*s)+"px";cv.style.height=Math.floor(H*s)+"px"}fit();addEventListener("resize",fit);var rt=new GX.Runtime(P,{print:function(m,l){(l==="error"?console.error:console.log)(m)}});rt.compileAll();await rt.load();function pt(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*W-W/2,H/2-(e.clientY-r.top)/r.height*H]}document.getElementById("go").onclick=function(){this.remove();rt.start();var last=performance.now(),acc=0;addEventListener("keydown",function(e){rt.key(e.key,true);if(e.key.indexOf("Arrow")===0||e.key===" ")e.preventDefault()});addEventListener("keyup",function(e){rt.key(e.key,false)});cv.addEventListener("pointermove",function(e){var p=pt(e);rt.pointer(p[0],p[1])});cv.addEventListener("pointerdown",function(e){var p=pt(e);rt.pointer(p[0],p[1],true,true)});cv.addEventListener("pointerup",function(e){var p=pt(e);rt.pointer(p[0],p[1],false)});(function loop(t){acc+=Math.min(.1,(t-last)/1000);last=t;var n=0;while(acc>=1/60&&n++<5){rt.step(1/60);acc-=1/60}rt.render(cx);requestAnimationFrame(loop)})(last)}})()</script>
-</body></html>
+<script id="app">
+/* g(x) editor, part 1: state, storage, objects, inspector, viewport */
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => 'o' + Math.random().toString(36).slice(2, 9);
+const clampN = (v, a, b) => Math.min(Math.max(v, a), b);
+
+/* ---------- storage (IndexedDB with in-memory fallback) ---------- */
+const Store = {
+  db: null, mem: new Map(),
+  async open() {
+    try {
+      this.db = await new Promise((res, rej) => {
+        const r = indexedDB.open('gx-editor', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+    } catch (e) { this.db = null; }
+  },
+  _tx(mode, fn) { return new Promise((res, rej) => { const t = this.db.transaction('kv', mode); const st = t.objectStore('kv'); const rq = fn(st); t.oncomplete = () => res(rq && rq.result); t.onerror = () => rej(t.error); }); },
+  async get(k) { if (!this.db) return this.mem.get(k); try { return await this._tx('readonly', s => s.get(k)); } catch (e) { return undefined; } },
+  async set(k, v) { if (!this.db) { this.mem.set(k, v); return; } try { await this._tx('readwrite', s => s.put(v, k)); } catch (e) { this.mem.set(k, v); } },
+  async del(k) { if (!this.db) { this.mem.delete(k); return; } try { await this._tx('readwrite', s => s.delete(k)); } catch (e) {} },
+  async keys(prefix) {
+    if (!this.db) return [...this.mem.keys()].filter(k => k.startsWith(prefix));
+    try { const all = await this._tx('readonly', s => s.getAllKeys()); return all.filter(k => String(k).startsWith(prefix)); } catch (e) { return []; }
+  }
+};
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+/* ---------- project model ---------- */
+const DEMO_SCRIPT = `// Arrow keys move this object. Press Play to try it.
+on start
+  print(hello from g(x))
+  indefinitely
+    if <key (left arrow) down?> then
+      edit att.x = (att.x - 3)
+    end
+    if <key (right arrow) down?> then
+      edit att.x = (att.x + 3)
+    end
+    if <key (up arrow) down?> then
+      edit att.y = (att.y + 3)
+    end
+    if <key (down arrow) down?> then
+      edit att.y = (att.y - 3)
+    end
+  end
+`;
+const WAVE_SCRIPT = `// Moves in a sine wave.
+on start
+  edit att.x = -200
+  indefinitely
+    edit att.x = (att.x + 1)
+    edit att.y = (60 * sin(att.x * 2))
+    if <(att.x) greater than (220)> then
+      edit att.x = -220
+    end
+  end
+`;
+function defaults(type, name) {
+  return { id: uid(), name, type, parent: null, x: 0, y: 0, z: 0, rotation: 0, rectLength: 40, rectHeight: 40, cRadius: 20, color: '#478cbf', visible: true, textures: [], sounds: [], data: {}, scripts: [] };
+}
+function newProject() {
+  const g = defaults('global', 'Global'); g.id = 'global'; g.data = { score: 0 };
+  const a = defaults('rectangle', 'Player'); a.rectLength = 48; a.rectHeight = 48; a.color = '#f2a65a'; a.x = -80; a.scripts = [{ name: 'movement', code: DEMO_SCRIPT }];
+  const b = defaults('circle', 'Wave'); b.cRadius = 14; b.color = '#6ecb8b'; b.x = -200; b.y = 60; b.scripts = [{ name: 'wave', code: WAVE_SCRIPT }];
+  return { format: 'gx-project', version: 1, name: 'Untitled', settings: { stageW: 480, stageH: 360, bg: '#1b1d22', autoPhysics: true }, assets: {}, objects: [g, a, b] };
+}
+let project = newProject();
+let selId = 'o-none';
+let dirty = false, lastSaved = null;
+const objById = (id) => project.objects.find(o => o.id === id);
+const sel = () => objById(selId);
+const children = (pid) => project.objects.filter(o => o.parent === pid && o.type !== 'global');
+const settings = Object.assign({ mode: 'system', accent: '#478cbf', uiSize: 13, grid: true, snap: 1, codeSize: 13 }, lsGet('gx-settings', {}));
+
+/* ---------- undo ---------- */
+const undoStack = [], redoStack = [];
+let lastCommit = 0;
+function snap() { return JSON.stringify(project.objects); }
+function commit(group) {
+  const now = Date.now();
+  if (group && now - lastCommit < 700 && undoStack.length) { lastCommit = now; markDirty(); return; }
+  undoStack.push(snap()); if (undoStack.length > 100) undoStack.shift(); redoStack.length = 0; lastCommit = now; markDirty();
+}
+function undo() { if (undoStack.length < 2) return; redoStack.push(undoStack.pop()); project.objects = JSON.parse(undoStack[undoStack.length - 1]); afterRestore(); }
+function redo() { if (!redoStack.length) return; const s = redoStack.pop(); undoStack.push(s); project.objects = JSON.parse(s); afterRestore(); }
+function afterRestore() { if (!sel()) selId = project.objects[1] ? project.objects[1].id : 'global'; markDirty(); refreshAll(); }
+
+function markDirty() { dirty = true; setStatus(); scheduleSession(); }
+function setStatus() { $('#status').textContent = project.name + (dirty ? ' •unsaved' : '') + (lastSaved ? ' · saved ' + lastSaved.toLocaleTimeString() : ''); document.title = 'g(x) – ' + project.name + (dirty ? '*' : ''); }
+function toast(msg, action, label) {
+  const t = $('#toast'); t.textContent = msg;
+  if (action) { const b = document.createElement('button'); b.textContent = label || 'Undo'; b.onclick = () => { action(); t.classList.remove('on'); }; t.appendChild(b); }
+  t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), action ? 7000 : 2600);
+}
+
+/* ---------- output log ---------- */
+const logLines = [];
+function log(msg, level) {
+  logLines.push({ msg: String(msg), level: level || 'log' }); if (logLines.length > 400) logLines.shift();
+  if (bottomTab === 'out') renderBottom();
+  if (level === 'error' || level === 'warn') $('#bottom').classList.add('open');
+}
+let bottomTab = 'out';
+function renderBottom() {
+  const b = $('#bottomBody');
+  if (bottomTab === 'out') {
+    b.innerHTML = logLines.length ? logLines.map(l => '<div class="l ' + l.level + '">' + esc(l.msg) + '</div>').join('') : '<div class="l sys">Output from print() and error messages appear here.</div>';
+    b.scrollTop = b.scrollHeight;
+  } else renderBackups();
+}
+
+/* ---------- object operations ---------- */
+function addObject(type) {
+  const names = { rectangle: 'Rectangle', circle: 'Circle', sprite: 'Sprite', empty: 'Empty' };
+  let n = 1, base = names[type] || 'Object'; while (project.objects.some(o => o.name === base + n)) n++;
+  const o = defaults(type, base + n);
+  const parent = sel(); if (parent && parent.type !== 'global') o.parent = null;
+  o.x = Math.round((Math.random() - .5) * 120); o.y = Math.round((Math.random() - .5) * 80);
+  if (type === 'sprite') o.color = '#9aa3b0';
+  project.objects.push(o); selId = o.id; commit(); refreshAll();
+}
+function deleteSelected() {
+  const o = sel(); if (!o || o.type === 'global') return;
+  const gone = new Set([o.id]); let grew = true;
+  while (grew) { grew = false; project.objects.forEach(x => { if (x.parent && gone.has(x.parent) && !gone.has(x.id)) { gone.add(x.id); grew = true; } }); }
+  const before = snap();
+  project.objects = project.objects.filter(x => !gone.has(x.id));
+  selId = 'global'; commit(); refreshAll();
+  toast('Deleted ' + o.name, () => { project.objects = JSON.parse(before); selId = o.id; commit(); refreshAll(); });
+}
+function duplicateSelected() {
+  const o = sel(); if (!o || o.type === 'global') return;
+  const c = JSON.parse(JSON.stringify(o)); c.id = uid(); c.x += 16; c.y -= 16;
+  let n = 2; while (project.objects.some(x => x.name === o.name.replace(/\d+$/, '') + n)) n++;
+  c.name = o.name.replace(/\d+$/, '') + n; project.objects.push(c); selId = c.id; commit(); refreshAll();
+}
+function isDescendant(id, ancestorId) { let o = objById(id); while (o && o.parent) { if (o.parent === ancestorId) return true; o = objById(o.parent); } return false; }
+
+/* ---------- tree ---------- */
+function renderTree() {
+  const ul = $('#tree'); ul.innerHTML = '';
+  const add = (o, depth) => {
+    const li = document.createElement('li');
+    const kids = children(o.id);
+    li.innerHTML = '<div class="row' + (o.id === selId ? ' sel' : '') + '" data-id="' + o.id + '" style="padding-left:' + (6 + depth * 14) + 'px" tabindex="0" role="treeitem">' +
+      '<span class="ico ' + o.type + '"></span><span class="nm">' + esc(o.name) + '</span>' +
+      (o.scripts.length ? '<span class="tag">' + o.scripts.length + ' script' + (o.scripts.length > 1 ? 's' : '') + '</span>' : '') +
+      (o.type !== 'global' ? '<span class="eye" data-eye="' + o.id + '" title="Show or hide">' + (o.visible ? '◉' : '○') + '</span>' : '') + '</div>';
+    ul.appendChild(li);
+    kids.forEach(k => add(k, depth + 1));
+  };
+  add(project.objects.find(o => o.type === 'global'), 0);
+  project.objects.filter(o => !o.parent && o.type !== 'global').forEach(o => add(o, 0));
+}
+$('#tree').addEventListener('click', (e) => {
+  const eye = e.target.closest('[data-eye]');
+  if (eye) { const o = objById(eye.dataset.eye); o.visible = !o.visible; commit(); refreshAll(); return; }
+  const r = e.target.closest('.row'); if (!r) return;
+  selId = r.dataset.id; refreshAll(true);
+});
+$('#tree').addEventListener('dblclick', (e) => { const r = e.target.closest('.row'); if (r) { selId = r.dataset.id; setWs('script'); } });
+$('#tree').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { const r = e.target.closest('.row'); if (r) { selId = r.dataset.id; refreshAll(true); e.preventDefault(); } } });
+
+/* ---------- assets ---------- */
+const imgCache = {};
+function imgFor(id) {
+  const a = project.assets[id]; if (!a) return null;
+  let c = imgCache[id]; if (!c || c.src !== a.data) { c = new Image(); c.src = a.data; c.onload = () => drawVp(); imgCache[id] = c; }
+  return c.complete && c.naturalWidth ? c : null;
+}
+function readFile(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
+function imgSize(data) { return new Promise(res => { const i = new Image(); i.onload = () => res([i.naturalWidth, i.naturalHeight]); i.onerror = () => res([0, 0]); i.src = data; }); }
+async function addAssetFiles(files, kind) {
+  const o = sel() || project.objects[0]; let n = 0;
+  for (const f of files) {
+    if (f.size > 12 * 1024 * 1024) { toast(f.name + ' is over 12 MB and was skipped.'); continue; }
+    const data = await readFile(f); const id = 'a' + uid();
+    const a = { id, name: f.name.replace(/\.[^.]+$/, '').replace(/\s+/g, '_'), kind, data };
+    if (kind === 'texture') { const s = await imgSize(data); a.w = s[0]; a.h = s[1]; }
+    project.assets[id] = a; (kind === 'texture' ? o.textures : o.sounds).push(id); n++;
+    if (kind === 'texture' && o.type === 'sprite' && o.textures.length === 1 && a.w) { o.rectLength = a.w; o.rectHeight = a.h; }
+  }
+  if (n) { commit(); refreshAll(); toast('Added ' + n + ' ' + kind + (n > 1 ? 's' : '') + ' to ' + o.name); }
+}
+function renderAssets() {
+  const box = $('#assetList'); const list = Object.values(project.assets);
+  if (!list.length) { box.innerHTML = '<div class="empty">No images or sounds yet.<br>Use “+ Image” or “+ Sound”, or paint a texture in the Textures tab.</div>'; return; }
+  const owners = {}; project.objects.forEach(o => [...o.textures, ...o.sounds].forEach(id => (owners[id] = owners[id] || []).push(o.name)));
+  box.innerHTML = '<div class="thumbs" style="padding:6px">' + list.map(a => '<div class="thumb" data-asset="' + a.id + '" title="' + esc(a.name) + ' — used by: ' + esc((owners[a.id] || ['nobody']).join(', ')) + '">' +
+    (a.kind === 'texture' ? '<img alt="" src="' + a.data + '">' : '<div style="height:42px;line-height:42px;font-size:20px">♪</div>') +
+    '<span>' + esc(a.name) + '</span><button class="x" data-del-asset="' + a.id + '" title="Delete asset">✕</button></div>').join('') + '</div>' +
+    '<div class="small muted" style="padding:0 8px 8px">Click an asset to add it to the selected object.</div>';
+}
+$('#assetList').addEventListener('click', (e) => {
+  const d = e.target.closest('[data-del-asset]');
+  if (d) { const id = d.dataset.delAsset; delete project.assets[id]; project.objects.forEach(o => { o.textures = o.textures.filter(x => x !== id); o.sounds = o.sounds.filter(x => x !== id); }); commit(); refreshAll(); return; }
+  const t = e.target.closest('[data-asset]'); if (!t) return;
+  const a = project.assets[t.dataset.asset]; const o = sel(); if (!a || !o) return;
+  const list = a.kind === 'texture' ? o.textures : o.sounds;
+  if (!list.includes(a.id)) { list.push(a.id); commit(); refreshAll(); toast('Added “' + a.name + '” to ' + o.name); } else toast(o.name + ' already has “' + a.name + '”.');
+});
+$('#btnUpTex').onclick = () => $('#fileImg').click();
+$('#btnUpSnd').onclick = () => $('#fileSnd').click();
+$('#fileImg').onchange = (e) => { addAssetFiles([...e.target.files], 'texture'); e.target.value = ''; };
+$('#fileSnd').onchange = (e) => { addAssetFiles([...e.target.files], 'sound'); e.target.value = ''; };
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => {
+  e.preventDefault(); const fs = [...(e.dataTransfer.files || [])]; if (!fs.length) return;
+  const proj = fs.find(f => /\.(gxproj|json)$/i.test(f.name)); if (proj) { openProjectFile(proj); return; }
+  addAssetFiles(fs.filter(f => f.type.startsWith('image/')), 'texture'); addAssetFiles(fs.filter(f => f.type.startsWith('audio/')), 'sound');
+});
+
+/* ---------- inspector ---------- */
+const NUM_FIELDS = [['x', 'X'], ['y', 'Y'], ['z', 'Z order'], ['rotation', 'Rotation °']];
+function renderInspector() {
+  const o = sel(); const box = $('#insp');
+  if (!o) { box.innerHTML = '<div class="empty">Nothing selected.</div>'; return; }
+  const isG = o.type === 'global';
+  const open = (k) => (renderInspector.closed && renderInspector.closed[k]) ? '' : ' open';
+  let h = '<details class="sec" data-sec="obj"' + open('obj') + '><summary>Object</summary><div class="body">' +
+    '<label for="f-name">Name</label><input type="text" id="f-name" data-k="name" value="' + esc(o.name) + '"' + (isG ? ' disabled' : '') + '>' +
+    '<label for="f-type">Type</label>' + (isG ? '<span class="muted">global (shared by all objects)</span>' :
+      '<select id="f-type" data-k="type">' + ['rectangle', 'circle', 'sprite', 'empty'].map(t => '<option' + (o.type === t ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>') +
+    (isG ? '' : '<label for="f-parent">Parent</label><select id="f-parent" data-k="parent"><option value="">(none)</option>' +
+      project.objects.filter(p => p.type !== 'global' && p.id !== o.id && !isDescendant(p.id, o.id)).map(p => '<option value="' + p.id + '"' + (o.parent === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</select>' +
+      '<label for="f-vis">Visible</label><input type="checkbox" id="f-vis" data-k="visible"' + (o.visible ? ' checked' : '') + '>') +
+    '<label>ID</label><code class="small">' + esc(o.id) + '</code></div></details>';
+  if (!isG) {
+    h += '<details class="sec" data-sec="tr"' + open('tr') + '><summary>Transform</summary><div class="body">' +
+      NUM_FIELDS.map(([k, l]) => '<label for="f-' + k + '">' + l + '</label><input type="number" id="f-' + k + '" data-k="' + k + '" value="' + (+o[k].toFixed(3)) + '" step="1">').join('') + '</div></details>';
+    h += '<details class="sec" data-sec="sh"' + open('sh') + '><summary>Shape</summary><div class="body">' +
+      (o.type === 'circle' ? '<label for="f-cRadius">Radius</label><input type="number" id="f-cRadius" data-k="cRadius" min="0" value="' + o.cRadius + '">' :
+        o.type === 'empty' ? '<span class="muted" style="grid-column:1/-1">Empty objects have no shape. Use them for controllers and data.</span>' :
+          '<label for="f-rectLength">Length</label><input type="number" id="f-rectLength" data-k="rectLength" min="0" value="' + o.rectLength + '"><label for="f-rectHeight">Height</label><input type="number" id="f-rectHeight" data-k="rectHeight" min="0" value="' + o.rectHeight + '">') +
+      (o.type !== 'empty' ? '<label for="f-color">Color</label><input type="color" id="f-color" data-k="color" value="' + o.color + '">' : '') + '</div></details>';
+  }
+  h += '<details class="sec" data-sec="tx"' + open('tx') + '><summary>Textures (' + o.textures.length + ')</summary><div class="body flow">' +
+    (o.textures.length ? '<div class="thumbs">' + o.textures.map(id => project.assets[id] ? '<div class="thumb" data-tex="' + id + '" title="Open in the texture maker"><img alt="" src="' + project.assets[id].data + '"><span>' + esc(project.assets[id].name) + '</span><button class="x" data-rm-tex="' + id + '">✕</button></div>' : '').join('') + '</div>' : '<span class="muted small">None. Scripts switch between them with “set texture to”.</span>') +
+    '<div class="two"><button data-act="uploadTex">Upload image…</button><button data-act="toTexMaker">Paint new…</button></div>' +
+    (!isG && o.textures.length ? '<button data-act="fitTex">Resize to first texture</button>' : '') + '</div></details>';
+  h += '<details class="sec" data-sec="sn"' + open('sn') + '><summary>Sounds (' + o.sounds.length + ')</summary><div class="body flow">' +
+    o.sounds.map(id => project.assets[id] ? '<div class="row" style="cursor:default"><span class="nm">' + esc(project.assets[id].name) + '</span><button data-play-snd="' + id + '">▶</button><button data-rm-snd="' + id + '">✕</button></div>' : '').join('') +
+    '<button data-act="uploadSnd">Upload sound…</button></div></details>';
+  const dk = Object.keys(o.data);
+  h += '<details class="sec" data-sec="dt"' + open('dt') + '><summary>' + (isG ? 'Global data (starting values)' : 'Data') + ' (' + dk.length + ')</summary><div class="body flow">' +
+    dk.map(k => '<div class="kv"><input type="text" value="' + esc(k) + '" data-dkey="' + esc(k) + '" aria-label="Key"><input type="text" value="' + esc(o.data[k]) + '" data-dval="' + esc(k) + '" aria-label="Value"><button data-ddel="' + esc(k) + '" title="Remove">✕</button></div>').join('') +
+    '<button data-act="addData">+ Add entry</button><span class="muted small">' + (isG ? 'Each entry becomes a global variable when the game starts.' : 'Read in scripts as data.key, write with edit data.key = …') + '</span></div></details>';
+  h += '<details class="sec" data-sec="sc"' + open('sc') + '><summary>Scripts (' + o.scripts.length + ')</summary><div class="body flow">' +
+    o.scripts.map((s, i) => '<div class="row" data-open-script="' + i + '"><span class="nm">' + esc(s.name) + '</span><span class="tag">' + s.code.split('\n').length + ' lines</span></div>').join('') +
+    '<button data-act="openScript">' + (o.scripts.length ? 'Open script editor' : '+ Attach a script') + '</button></div></details>';
+  box.innerHTML = h;
+  $$('.sec', box).forEach(d => d.addEventListener('toggle', () => { renderInspector.closed = renderInspector.closed || {}; renderInspector.closed[d.dataset.sec] = !d.open; }));
+}
+$('#insp').addEventListener('input', (e) => {
+  const o = sel(); const t = e.target; if (!o) return;
+  if (t.dataset.k) {
+    const k = t.dataset.k; let v = t.type === 'checkbox' ? t.checked : t.type === 'number' ? (parseFloat(t.value) || 0) : t.value;
+    if (k === 'parent') v = v || null;
+    if (k === 'name') { v = v.replace(/[()<>\[\]]/g, ''); }
+    o[k] = v; commit(true); if (k === 'name' || k === 'parent' || k === 'visible') renderTree(); if (k === 'type') renderInspector(); drawVp();
+  } else if (t.dataset.dval !== undefined) { o.data[t.dataset.dval] = isNaN(Number(t.value)) || t.value === '' ? t.value : Number(t.value); commit(true); }
+});
+$('#insp').addEventListener('change', (e) => {
+  const o = sel(); const t = e.target; if (!o) return;
+  if (t.dataset.dkey !== undefined) { const nk = t.value.trim(); const ok = t.dataset.dkey; if (nk && nk !== ok && !(nk in o.data)) { const nd = {}; Object.keys(o.data).forEach(k => nd[k === ok ? nk : k] = o.data[k]); o.data = nd; commit(); renderInspector(); } else renderInspector(); }
+  if (t.dataset.k === 'name' || t.dataset.k === 'parent') refreshAll(true);
+});
+$('#insp').addEventListener('click', (e) => {
+  const o = sel(); if (!o) return; const t = e.target;
+  const act = t.closest('[data-act]'); const rmT = t.closest('[data-rm-tex]'); const rmS = t.closest('[data-rm-snd]'); const pl = t.closest('[data-play-snd]'); const dd = t.closest('[data-ddel]'); const os = t.closest('[data-open-script]'); const tx = t.closest('[data-tex]');
+  if (rmT) { o.textures = o.textures.filter(x => x !== rmT.dataset.rmTex); commit(); refreshAll(); return; }
+  if (rmS) { o.sounds = o.sounds.filter(x => x !== rmS.dataset.rmSnd); commit(); refreshAll(); return; }
+  if (pl) { const a = project.assets[pl.dataset.playSnd]; if (a) { try { new Audio(a.data).play(); } catch (er) {} } return; }
+  if (dd) { delete o.data[dd.dataset.ddel]; commit(); renderInspector(); return; }
+  if (os) { scriptIdx = +os.dataset.openScript; setWs('script'); return; }
+  if (tx && !t.closest('[data-rm-tex]')) { texLoadAsset(tx.dataset.tex); setWs('tex'); return; }
+  if (!act) return;
+  const a = act.dataset.act;
+  if (a === 'uploadTex') $('#fileImg').click();
+  else if (a === 'uploadSnd') $('#fileSnd').click();
+  else if (a === 'toTexMaker') setWs('tex');
+  else if (a === 'openScript') { if (!o.scripts.length) { o.scripts.push({ name: 'script1', code: 'on start\n  print(hello)\nend\n'.replace('\nend\n', '\n') }); commit(); } scriptIdx = 0; setWs('script'); }
+  else if (a === 'addData') { let n = 1; while (('value' + n) in o.data) n++; o.data['value' + n] = 0; commit(); renderInspector(); }
+  else if (a === 'fitTex') { const as = project.assets[o.textures[0]]; if (as && as.w) { o.rectLength = as.w; o.rectHeight = as.h; commit(); renderInspector(); drawVp(); } }
+});
+
+/* ---------- viewport ---------- */
+const vp = $('#vp'), vctx = vp.getContext('2d');
+const cam = { x: 0, y: 0, zoom: 1 };
+let vpDrag = null, spaceDown = false;
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function resizeVp() { const r = vp.getBoundingClientRect(); const d = window.devicePixelRatio || 1; vp.width = Math.max(1, r.width * d); vp.height = Math.max(1, r.height * d); drawVp(); }
+new ResizeObserver(resizeVp).observe($('#vpWrap'));
+const w2s = (x, y) => { const d = window.devicePixelRatio || 1; return [(vp.width / d) / 2 + (x - cam.x) * cam.zoom, (vp.height / d) / 2 - (y - cam.y) * cam.zoom]; };
+const s2w = (sx, sy) => { const d = window.devicePixelRatio || 1; return [(sx - (vp.width / d) / 2) / cam.zoom + cam.x, -(sy - (vp.height / d) / 2) / cam.zoom + cam.y]; };
+function objSize(o) { return o.type === 'circle' ? [o.cRadius * 2, o.cRadius * 2] : [o.rectLength, o.rectHeight]; }
+function drawVp() {
+  if (!vp.width) return;
+  const d = window.devicePixelRatio || 1; const c = vctx; const W = vp.width / d, H = vp.height / d;
+  c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, W, H);
+  const sw = project.settings.stageW, sh = project.settings.stageH;
+  if (settings.grid) {
+    c.strokeStyle = cssVar('--grid'); c.lineWidth = 1; const step = cam.zoom >= 1.2 ? 20 : 100; c.beginPath();
+    const [x0, y0] = s2w(0, H), [x1, y1] = s2w(W, 0);
+    for (let x = Math.floor(x0 / step) * step; x <= x1; x += step) { const [sx] = w2s(x, 0); c.moveTo(Math.round(sx) + .5, 0); c.lineTo(Math.round(sx) + .5, H); }
+    for (let y = Math.floor(y0 / step) * step; y <= y1; y += step) { const [, sy] = w2s(0, y); c.moveTo(0, Math.round(sy) + .5); c.lineTo(W, Math.round(sy) + .5); }
+    c.stroke();
+  }
+  const [ax, ay] = w2s(-sw / 2, sh / 2);
+  c.fillStyle = project.settings.bg; c.fillRect(ax, ay, sw * cam.zoom, sh * cam.zoom);
+  c.strokeStyle = cssVar('--accent'); c.globalAlpha = .6; c.strokeRect(ax + .5, ay + .5, sw * cam.zoom, sh * cam.zoom); c.globalAlpha = 1;
+  const [ox, oy] = w2s(0, 0); c.strokeStyle = 'rgba(128,128,128,.5)'; c.beginPath(); c.moveTo(ox - 8, oy); c.lineTo(ox + 8, oy); c.moveTo(ox, oy - 8); c.lineTo(ox, oy + 8); c.stroke();
+  const list = project.objects.filter(o => o.type !== 'global').sort((a, b) => a.z - b.z);
+  for (const o of list) {
+    const [sx, sy] = w2s(o.x, o.y); const [w, h] = objSize(o);
+    c.save(); c.translate(sx, sy); c.rotate(-o.rotation * Math.PI / 180); c.globalAlpha = o.visible ? 1 : .3;
+    const tex = o.textures.length ? imgFor(o.textures[0]) : null;
+    if (tex) { c.imageSmoothingEnabled = false; c.drawImage(tex, -w * cam.zoom / 2, -h * cam.zoom / 2, w * cam.zoom, h * cam.zoom); }
+    else if (o.type === 'circle') { c.fillStyle = o.color; c.beginPath(); c.arc(0, 0, o.cRadius * cam.zoom, 0, 7); c.fill(); }
+    else if (o.type === 'empty') { c.strokeStyle = cssVar('--fg3'); c.setLineDash([4, 3]); c.strokeRect(-12, -12, 24, 24); c.setLineDash([]); c.fillStyle = cssVar('--fg3'); c.font = '10px sans-serif'; c.fillText(o.name, -10, 24); }
+    else { c.fillStyle = o.color; c.fillRect(-w * cam.zoom / 2, -h * cam.zoom / 2, w * cam.zoom, h * cam.zoom); if (o.type === 'sprite' && !tex) { c.strokeStyle = 'rgba(255,255,255,.5)'; c.setLineDash([4, 3]); c.strokeRect(-w * cam.zoom / 2, -h * cam.zoom / 2, w * cam.zoom, h * cam.zoom); c.setLineDash([]); } }
+    c.restore();
+  }
+  const s = sel();
+  if (s && s.type !== 'global' && s.type !== 'empty') {
+    const [sx, sy] = w2s(s.x, s.y); const [w, h] = objSize(s);
+    c.save(); c.translate(sx, sy); c.rotate(-s.rotation * Math.PI / 180);
+    c.strokeStyle = cssVar('--accent'); c.lineWidth = 1.5; c.strokeRect(-w * cam.zoom / 2, -h * cam.zoom / 2, w * cam.zoom, h * cam.zoom);
+    c.fillStyle = cssVar('--accent');
+    for (const [hx, hy] of handlePts(s)) c.fillRect(hx * cam.zoom - 4, -hy * cam.zoom - 4, 8, 8);
+    c.restore();
+  }
+  $('#vpInfo').textContent = Math.round(cam.zoom * 100) + '%  ·  ' + (s && s.type !== 'global' ? s.name + ' (' + Math.round(s.x) + ', ' + Math.round(s.y) + ')' : 'no selection');
+}
+function handlePts(o) { if (o.type === 'circle') return [[o.cRadius, 0]]; const [w, h] = objSize(o); return [[w / 2, h / 2], [-w / 2, h / 2], [w / 2, -h / 2], [-w / 2, -h / 2]]; }
+function hitObj(wx, wy) {
+  const list = project.objects.filter(o => o.type !== 'global' && o.visible).sort((a, b) => b.z - a.z);
+  for (const o of list) {
+    const dx = wx - o.x, dy = wy - o.y, a = o.rotation * Math.PI / 180;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    if (o.type === 'circle') { if (Math.hypot(lx, ly) <= o.cRadius) return o; }
+    else if (o.type === 'empty') { if (Math.abs(lx) < 14 / cam.zoom && Math.abs(ly) < 14 / cam.zoom) return o; }
+    else { const [w, h] = objSize(o); if (Math.abs(lx) <= w / 2 && Math.abs(ly) <= h / 2) return o; }
+  }
+  return null;
+}
+function hitHandle(sx, sy) {
+  const s = sel(); if (!s || s.type === 'global' || s.type === 'empty') return -1;
+  const a = -s.rotation * Math.PI / 180; const [cx, cy] = w2s(s.x, s.y);
+  const pts = handlePts(s);
+  for (let i = 0; i < pts.length; i++) {
+    const px = pts[i][0] * cam.zoom, py = -pts[i][1] * cam.zoom;
+    const rx = cx + px * Math.cos(a) - py * Math.sin(a), ry = cy + px * Math.sin(a) + py * Math.cos(a);
+    if (Math.abs(sx - rx) < 7 && Math.abs(sy - ry) < 7) return i;
+  }
+  return -1;
+}
+const snapV = (v, shift) => { const g = shift ? 10 : settings.snap; return g > 1 ? Math.round(v / g) * g : Math.round(v); };
+vp.addEventListener('pointerdown', (e) => {
+  vp.focus(); vp.setPointerCapture(e.pointerId);
+  const r = vp.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const [wx, wy] = s2w(sx, sy);
+  if (e.button === 1 || e.button === 2 || spaceDown) { vpDrag = { mode: 'pan', sx, sy, cx: cam.x, cy: cam.y }; return; }
+  const hi = hitHandle(sx, sy);
+  if (hi >= 0) { vpDrag = { mode: 'resize', o: sel(), before: snap() }; return; }
+  const o = hitObj(wx, wy);
+  if (o) { selId = o.id; vpDrag = { mode: 'move', o, ox: wx - o.x, oy: wy - o.y, moved: false }; refreshAll(true); }
+  else { selId = 'global'; vpDrag = { mode: 'pan', sx, sy, cx: cam.x, cy: cam.y }; refreshAll(true); }
+});
+vp.addEventListener('pointermove', (e) => {
+  if (!vpDrag) return;
+  const r = vp.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top; const [wx, wy] = s2w(sx, sy);
+  if (vpDrag.mode === 'pan') { cam.x = vpDrag.cx - (sx - vpDrag.sx) / cam.zoom; cam.y = vpDrag.cy + (sy - vpDrag.sy) / cam.zoom; }
+  else if (vpDrag.mode === 'move') { const o = vpDrag.o; o.x = snapV(wx - vpDrag.ox, e.shiftKey); o.y = snapV(wy - vpDrag.oy, e.shiftKey); vpDrag.moved = true; }
+  else if (vpDrag.mode === 'resize') {
+    const o = vpDrag.o; const dx = wx - o.x, dy = wy - o.y, a = o.rotation * Math.PI / 180;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    if (o.type === 'circle') o.cRadius = Math.max(1, snapV(Math.hypot(lx, ly), e.shiftKey));
+    else { o.rectLength = Math.max(1, snapV(Math.abs(lx) * 2, e.shiftKey)); o.rectHeight = Math.max(1, snapV(Math.abs(ly) * 2, e.shiftKey)); }
+  }
+  drawVp();
+});
+vp.addEventListener('pointerup', () => { if (vpDrag && (vpDrag.mode === 'resize' || (vpDrag.mode === 'move' && vpDrag.moved))) { commit(); renderInspector(); } vpDrag = null; });
+vp.addEventListener('contextmenu', (e) => e.preventDefault());
+vp.addEventListener('wheel', (e) => {
+  e.preventDefault(); const r = vp.getBoundingClientRect(); const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  const [bx, by] = s2w(sx, sy); cam.zoom = clampN(cam.zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), 0.1, 8);
+  const [ax, ay] = s2w(sx, sy); cam.x += bx - ax; cam.y += by - ay; drawVp();
+}, { passive: false });
+function fitView() { const d = window.devicePixelRatio || 1; const W = vp.width / d, H = vp.height / d; cam.x = 0; cam.y = 0; cam.zoom = clampN(Math.min((W - 60) / project.settings.stageW, (H - 60) / project.settings.stageH), 0.1, 8); drawVp(); }
+$('#zoomFit').onclick = fitView;
+$('#zoomIn').onclick = () => { cam.zoom = clampN(cam.zoom * 1.25, .1, 8); drawVp(); };
+$('#zoomOut').onclick = () => { cam.zoom = clampN(cam.zoom / 1.25, .1, 8); drawVp(); };
+vp.addEventListener('keydown', (e) => {
+  const o = sel(); if (!o || o.type === 'global') return; const st = e.shiftKey ? 10 : 1;
+  const m = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, st], ArrowDown: [0, -st] }[e.key];
+  if (m) { o.x += m[0]; o.y += m[1]; commit(true); renderInspector(); drawVp(); e.preventDefault(); }
+});
+
+function refreshAll(keepScript) { renderTree(); renderInspector(); renderAssets(); drawVp(); if (!keepScript || wsCur === 'script') scriptRender(); }
+
+/* g(x) editor, part 2: workspaces, scripts, textures, play, files, backups, export, settings */
+let wsCur = 'vp', scriptIdx = 0;
+function setWs(name) {
+  wsCur = name;
+  $$('.ws').forEach(w => w.classList.toggle('on', w.id === name + 'Ws'));
+  $$('.tabs [data-ws]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ws === name)));
+  if (name === 'vp') resizeVp();
+  if (name === 'script') scriptRender();
+  if (name === 'game') fitGame();
+  if (name === 'tex') { texSync(); }
+}
+$$('.tabs [data-ws]').forEach(b => b.onclick = () => setWs(b.dataset.ws));
+
+/* ---------- Integral editor ---------- */
+const KW = 'on|end|if|then|else|repeat|until|indefinitely|forever|switch|case|default|define|return|wait|edit|set|broadcast|print|construct|duplicate|destroy|play|stop|brush|wash|paint|point|turn|move|enable|disable|tick|push|create|delete|start|new|add|clear|replace|cycle|disappear|show|stretch|global';
+const TOK = new RegExp('(att\\.\\w+|data\\.\\w+)|(\\b\\d+(?:\\.\\d+)?\\b)|(\\b(?:' + KW + ')\\b)|([()<>\\[\\]\\/])', 'gi');
+function highlight(src) {
+  return src.split('\n').map(line => {
+    const cm = /(^|\s)(\/\/|#)/.exec(line); let code = line, comment = '';
+    if (cm) { const at = cm.index + cm[1].length; code = line.slice(0, at); comment = line.slice(at); }
+    let out = '', last = 0, m;
+    const hat = /^(\s*)(on\s+(?:construct\s+start|start|message|key|clicked))/i.exec(code);
+    let start = 0;
+    if (hat) { out += esc(hat[1]) + '<span class="t-ev">' + esc(hat[2]) + '</span>'; start = hat[0].length; last = start; }
+    TOK.lastIndex = start;
+    while ((m = TOK.exec(code))) {
+      out += esc(code.slice(last, m.index));
+      const cls = m[1] ? 't-att' : m[2] ? 't-num' : m[3] ? 't-kw' : 't-br';
+      out += '<span class="' + cls + '">' + esc(m[0]) + '</span>'; last = m.index + m[0].length;
+    }
+    out += esc(code.slice(last));
+    if (comment) out += '<span class="t-cm">' + esc(comment) + '</span>';
+    return out;
+  }).join('\n') + '\n';
+}
+const PALETTE = [
+  ['Events', ['on start', 'on message (name)', 'on construct start', 'on key (a) pressed', 'on clicked']],
+  ['Control', ['indefinitely\n  \nend', 'repeat (10)\n  \nend', 'repeat until <(att.x) greater than (100)>\n  \nend', 'if <> then\n  \nend', 'if <> then\n  \nelse\n  \nend', 'switch (value)\n  case (1)\n    \n  default\n    \nend', 'wait (1) secs', 'wait until <key space pressed?>']],
+  ['Attributes & variables', ['edit att.x = (att.x + 1)', 'edit att.y = 0', 'edit att.rectLength = 50', 'edit att.cRadius = 20', 'edit att.z = 1', 'score = 0', 'score = (score + 1)', 'edit data.key = 1', 'edit att.x of (Player) = 0']],
+  ['Operators', ['(2 + 2)', '(sin(att.x))', '(random (1) to (10))', '(distance from (att.x,att.y) to (0,0))', '(round (3.14159) to place (2))', '<() = ()?>', '<() greater than ()?>', '<<> and <>?>', '<not <>>']],
+  ['Text', ['(join ((apple) (banana)))', '(length (hello))', '(letters from (1) to (2) in (hello))', '(replace all (a) in (banana) with (o))', '<(apple) has (a)?>']],
+  ['Sensing', ['<key (a) pressed?>', '<key (space) hit?>', '<touching object (Name)?>', '(cursor x)', '(cursor y)', '(last key pressed)', '(normal direction between me and (Name))']],
+  ['Messages & timers', ['broadcast message (go) with data (1)', '(received data)', 'create timer (clock)', 'start timer (clock)', '(secs of timer (clock))']],
+  ['Textures & sound', ['set texture to (name)', 'cycle next texture', 'disappear', 'show', 'stretch texture to x: (64) y: (64)', 'play sound (name)', 'stop sound (name)']],
+  ['Constructs', ['construct new (circle) with radius (8) at (0,0) with ID (shot)', 'construct new (rectangle) with dimensions (10,10) at (0,0) with ID (box)', 'duplicate this object', 'destroy construct (shot)', 'destroy all constructs']],
+  ['Lists', ['new list [1,2,3], ID (nums)', '(item (1) in (nums))', 'add (4) to list (nums)', '(average of list (nums))']],
+  ['Casso', ['brush down', 'brush up', 'wash canvas', 'set paint color to (255,0,0)', 'set brush size to (3)', 'paint myself at (0,0)']],
+  ['Vectors', ['point (90) degrees', 'point towards ((cursor x),(cursor y))', 'turn (5) degrees', '(direction)', '(x of /vector magnitude (5) angle (90)/)']],
+  ['Physics', ['enable physics for (this-object)', 'set gravity to (0,-300)', 'set velocity to (0,100)', 'push with force (3) at angle (direction)', 'set density to 500']]
+];
+$('#palette').innerHTML = PALETTE.map(([t, items], i) => '<details' + (i < 2 ? ' open' : '') + '><summary>' + t + '</summary>' + items.map((s, j) => '<button class="snip" data-g="' + i + '" data-i="' + j + '" title="Insert at cursor">' + esc(s.split('\n')[0]) + '</button>').join('') + '</details>').join('');
+$('#palette').addEventListener('click', (e) => {
+  const b = e.target.closest('.snip'); if (!b) return; const ta = $('#code'); if (ta.disabled) return;
+  const s = PALETTE[+b.dataset.g][1][+b.dataset.i];
+  const lineStart = ta.value.lastIndexOf('\n', ta.selectionStart - 1) + 1; const indent = /^\s*/.exec(ta.value.slice(lineStart))[0];
+  const text = s.split('\n').map((l, i) => i ? indent + l : l).join('\n');
+  ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end'); ta.focus(); codeInput();
+});
+let diagTimer = 0;
+function scriptRender() {
+  const o = sel(); const list = $('#scriptList'); const ta = $('#code');
+  if (!o) return;
+  if (scriptIdx >= o.scripts.length) scriptIdx = Math.max(0, o.scripts.length - 1);
+  list.innerHTML = '<div class="muted small" style="padding:6px 8px">' + esc(o.name) + '</div>' +
+    (o.scripts.length ? o.scripts.map((s, i) => '<div class="row' + (i === scriptIdx ? ' sel' : '') + '" data-si="' + i + '"><span class="nm">' + esc(s.name) + '</span></div>').join('') : '<div class="empty">No scripts yet.</div>');
+  const s = o.scripts[scriptIdx];
+  ta.disabled = !s; $('#scriptName').disabled = !s; $('#delScript').disabled = !s;
+  $('#scriptName').value = s ? s.name : '';
+  ta.value = s ? s.code : '';
+  if (!s) ta.placeholder = 'Click “+ New” to attach a script to ' + o.name + '.';
+  paintCode();
+}
+function paintCode() {
+  const ta = $('#code'); $('#hl').innerHTML = highlight(ta.value);
+  const n = ta.value.split('\n').length; const bad = new Set(lastErrors.map(e => e.line));
+  $('#gutter').innerHTML = Array.from({ length: n }, (_, i) => '<span' + (bad.has(i + 1) ? ' class="bad"' : '') + '>' + (i + 1) + '</span>').join('');
+  syncScroll();
+}
+let lastErrors = [];
+function runDiag() {
+  const o = sel(); const s = o && o.scripts[scriptIdx]; const d = $('#diag');
+  if (!s) { d.innerHTML = ''; lastErrors = []; return; }
+  const r = GX.Lang.compile(s.code); lastErrors = r.errors;
+  d.innerHTML = r.errors.length ? r.errors.map(e => '<div class="e">line ' + e.line + ': ' + esc(e.msg) + '</div>').join('') : '<div class="ok">No problems. ' + r.hats.length + ' event' + (r.hats.length === 1 ? '' : 's') + (r.funcs.length ? ', ' + r.funcs.length + ' function' + (r.funcs.length === 1 ? '' : 's') : '') + '.</div>';
+  paintCode();
+}
+function codeInput() {
+  const o = sel(); const s = o && o.scripts[scriptIdx]; if (!s) return;
+  s.code = $('#code').value; commit(true); paintCode(); clearTimeout(diagTimer); diagTimer = setTimeout(runDiag, 250);
+}
+function syncScroll() { const ta = $('#code'); $('#hl').scrollTop = ta.scrollTop; $('#hl').scrollLeft = ta.scrollLeft; $('#gutter').scrollTop = ta.scrollTop; }
+$('#code').addEventListener('input', codeInput);
+$('#code').addEventListener('scroll', syncScroll);
+$('#code').addEventListener('keydown', (e) => {
+  const ta = e.target;
+  if (e.key === 'Tab') { e.preventDefault(); ta.setRangeText('  ', ta.selectionStart, ta.selectionEnd, 'end'); codeInput(); }
+  else if (e.key === 'Enter') {
+    e.preventDefault(); const ls = ta.value.lastIndexOf('\n', ta.selectionStart - 1) + 1; const line = ta.value.slice(ls, ta.selectionStart);
+    let ind = /^\s*/.exec(line)[0]; if (/^\s*(on\b|if\b|repeat\b|indefinitely|forever|switch|case\b|default|else|define)/i.test(line)) ind += '  ';
+    ta.setRangeText('\n' + ind, ta.selectionStart, ta.selectionEnd, 'end'); codeInput();
+  }
+});
+$('#scriptList').addEventListener('click', (e) => { const r = e.target.closest('[data-si]'); if (r) { scriptIdx = +r.dataset.si; scriptRender(); runDiag(); } });
+$('#addScript').onclick = () => { const o = sel(); if (!o) return; let n = o.scripts.length + 1; o.scripts.push({ name: 'script' + n, code: 'on start\n  print(hello from ' + o.name + ')\n' }); scriptIdx = o.scripts.length - 1; commit(); scriptRender(); runDiag(); renderTree(); renderInspector(); };
+$('#delScript').onclick = () => { const o = sel(); if (!o || !o.scripts[scriptIdx]) return; const before = snap(); o.scripts.splice(scriptIdx, 1); commit(); scriptRender(); runDiag(); renderTree(); renderInspector(); toast('Script deleted', () => { project.objects = JSON.parse(before); commit(); refreshAll(); }); };
+$('#scriptName').addEventListener('input', (e) => { const o = sel(); if (o && o.scripts[scriptIdx]) { o.scripts[scriptIdx].name = e.target.value || 'script'; commit(true); const r = $('#scriptList [data-si="' + scriptIdx + '"] .nm'); if (r) r.textContent = e.target.value; } });
+const _scriptRender = scriptRender; scriptRender = function () { _scriptRender(); runDiag(); };
+
+/* ---------- Texture painter ---------- */
+const tc = $('#texCanvas'); const tctx = tc.getContext('2d', { willReadFrequently: true });
+const TOOLS = [['pencil', '✎', 'Pencil'], ['eraser', '⌫', 'Eraser'], ['line', '╱', 'Line'], ['rect', '▭', 'Rectangle outline'], ['box', '■', 'Filled rectangle'], ['ellipse', '◯', 'Ellipse outline'], ['disc', '●', 'Filled ellipse'], ['fill', '⬣', 'Fill'], ['pick', '◉', 'Pick color']];
+let tool = 'pencil', texUndo = [], texRedo = [], texEditing = null, texGrid = false, texDrag = null;
+$('#texTools').innerHTML = TOOLS.map(([k, i, t]) => '<button data-tool="' + k + '" title="' + t + '" aria-label="' + t + '" aria-pressed="' + (k === tool) + '">' + i + '</button>').join('');
+$('#texTools').addEventListener('click', (e) => { const b = e.target.closest('[data-tool]'); if (!b) return; tool = b.dataset.tool; $$('#texTools button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+const PAL = ['#000000', '#ffffff', '#7f7f7f', '#c0392b', '#f2a65a', '#f1c40f', '#6ecb8b', '#2e9e5b', '#478cbf', '#2b4c7e', '#8e44ad', '#e84393', '#6d4c41', '#d7ccc8', '#1b1d22', '#ff6b3d'];
+$('#swatches').innerHTML = PAL.map(c => '<button style="background:' + c + '" data-c="' + c + '" title="' + c + '" aria-label="' + c + '"></button>').join('');
+$('#swatches').addEventListener('click', (e) => { const b = e.target.closest('[data-c]'); if (b) $('#texColor').value = b.dataset.c; });
+function texSize() { return +$('#texSize').value; }
+function texSync() {
+  const z = +$('#texZoom').value; const n = tc.width; tc.style.width = n * z + 'px'; tc.style.height = n * z + 'px';
+  tc.style.backgroundImage = texGrid ? 'linear-gradient(to right, rgba(128,128,128,.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(128,128,128,.35) 1px, transparent 1px), repeating-conic-gradient(var(--bg3) 0 25%, transparent 0 50%)' : '';
+  tc.style.backgroundSize = texGrid ? z + 'px ' + z + 'px, ' + z + 'px ' + z + 'px, 16px 16px' : '';
+  $('#texSave').textContent = texEditing ? 'Update texture' : 'Save as texture';
+}
+function texInit(n) { tc.width = n; tc.height = n; tctx.clearRect(0, 0, n, n); texUndo = []; texRedo = []; texSync(); }
+texInit(64);
+function texPush() { texUndo.push(tctx.getImageData(0, 0, tc.width, tc.height)); if (texUndo.length > 40) texUndo.shift(); texRedo = []; }
+$('#texUndo').onclick = () => { if (!texUndo.length) return; texRedo.push(tctx.getImageData(0, 0, tc.width, tc.height)); tctx.putImageData(texUndo.pop(), 0, 0); };
+$('#texRedo').onclick = () => { if (!texRedo.length) return; texUndo.push(tctx.getImageData(0, 0, tc.width, tc.height)); tctx.putImageData(texRedo.pop(), 0, 0); };
+$('#texClear').onclick = () => { texPush(); tctx.clearRect(0, 0, tc.width, tc.height); };
+$('#texGrid').onclick = () => { texGrid = !texGrid; texSync(); };
+$('#texZoom').onchange = texSync;
+$('#texSize').onchange = () => { const n = texSize(); const old = document.createElement('canvas'); old.width = tc.width; old.height = tc.height; old.getContext('2d').drawImage(tc, 0, 0); texPush(); const keep = texUndo; tc.width = n; tc.height = n; tctx.drawImage(old, 0, 0); texUndo = keep; texSync(); };
+function texFlip(h) { texPush(); const c = document.createElement('canvas'); c.width = tc.width; c.height = tc.height; c.getContext('2d').drawImage(tc, 0, 0); tctx.clearRect(0, 0, tc.width, tc.height); tctx.save(); if (h) { tctx.translate(tc.width, 0); tctx.scale(-1, 1); } else { tctx.translate(0, tc.height); tctx.scale(1, -1); } tctx.drawImage(c, 0, 0); tctx.restore(); }
+$('#texFlipH').onclick = () => texFlip(true); $('#texFlipV').onclick = () => texFlip(false);
+function plot(x, y, erase) {
+  const b = Math.max(1, +$('#texBrush').value || 1); const o = Math.floor(b / 2);
+  if (erase) tctx.clearRect(x - o, y - o, b, b); else { tctx.fillStyle = $('#texColor').value; tctx.fillRect(x - o, y - o, b, b); }
+}
+function line(x0, y0, x1, y1, er) { const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx + dy; for (;;) { plot(x0, y0, er); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sx; } if (e2 <= dx) { err += dx; y0 += sy; } } }
+function rectShape(a, b, filled) { const x0 = Math.min(a[0], b[0]), x1 = Math.max(a[0], b[0]), y0 = Math.min(a[1], b[1]), y1 = Math.max(a[1], b[1]); if (filled) { tctx.fillStyle = $('#texColor').value; tctx.fillRect(x0, y0, x1 - x0 + 1, y1 - y0 + 1); } else { line(x0, y0, x1, y0); line(x1, y0, x1, y1); line(x1, y1, x0, y1); line(x0, y1, x0, y0); } }
+function ellipseShape(a, b, filled) {
+  const cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2, rx = Math.abs(b[0] - a[0]) / 2, ry = Math.abs(b[1] - a[1]) / 2;
+  if (filled) { tctx.fillStyle = $('#texColor').value; for (let y = Math.ceil(cy - ry); y <= Math.floor(cy + ry); y++) { const t = ry ? 1 - Math.pow((y - cy) / ry, 2) : 1; const w = rx * Math.sqrt(Math.max(0, t)); tctx.fillRect(Math.round(cx - w), y, Math.max(1, Math.round(w * 2)), 1); } }
+  else { const steps = Math.max(24, Math.ceil((rx + ry) * 8)); for (let i = 0; i < steps; i++) { const t = i / steps * Math.PI * 2; plot(Math.round(cx + Math.cos(t) * rx), Math.round(cy + Math.sin(t) * ry)); } }
+}
+const hex2rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16), 255];
+function floodFill(x, y) {
+  const w = tc.width, h = tc.height; const img = tctx.getImageData(0, 0, w, h), d = img.data; const i0 = (y * w + x) * 4; const tgt = [d[i0], d[i0 + 1], d[i0 + 2], d[i0 + 3]]; const nc = hex2rgb($('#texColor').value);
+  if (tgt.every((v, i) => v === nc[i])) return; const stack = [[x, y]];
+  const same = (i) => d[i] === tgt[0] && d[i + 1] === tgt[1] && d[i + 2] === tgt[2] && d[i + 3] === tgt[3];
+  while (stack.length) { const [px, py] = stack.pop(); if (px < 0 || py < 0 || px >= w || py >= h) continue; const i = (py * w + px) * 4; if (!same(i)) continue; d[i] = nc[0]; d[i + 1] = nc[1]; d[i + 2] = nc[2]; d[i + 3] = 255; stack.push([px + 1, py], [px - 1, py], [px, py + 1], [px, py - 1]); }
+  tctx.putImageData(img, 0, 0);
+}
+const texPos = (e) => { const r = tc.getBoundingClientRect(); return [clampN(Math.floor((e.clientX - r.left) / r.width * tc.width), 0, tc.width - 1), clampN(Math.floor((e.clientY - r.top) / r.height * tc.height), 0, tc.height - 1)]; };
+tc.addEventListener('pointerdown', (e) => {
+  tc.setPointerCapture(e.pointerId); const p = texPos(e);
+  if (tool === 'pick') { const d = tctx.getImageData(p[0], p[1], 1, 1).data; if (d[3]) $('#texColor').value = '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join(''); return; }
+  texPush();
+  if (tool === 'fill') { floodFill(p[0], p[1]); return; }
+  texDrag = { start: p, last: p, base: tctx.getImageData(0, 0, tc.width, tc.height) };
+  if (tool === 'pencil') plot(p[0], p[1]); if (tool === 'eraser') plot(p[0], p[1], true);
+});
+tc.addEventListener('pointermove', (e) => {
+  if (!texDrag) return; const p = texPos(e);
+  if (tool === 'pencil' || tool === 'eraser') { line(texDrag.last[0], texDrag.last[1], p[0], p[1], tool === 'eraser'); texDrag.last = p; return; }
+  tctx.putImageData(texDrag.base, 0, 0);
+  if (tool === 'line') line(texDrag.start[0], texDrag.start[1], p[0], p[1]);
+  else if (tool === 'rect' || tool === 'box') rectShape(texDrag.start, p, tool === 'box');
+  else if (tool === 'ellipse' || tool === 'disc') ellipseShape(texDrag.start, p, tool === 'disc');
+});
+tc.addEventListener('pointerup', () => { texDrag = null; });
+function texLoadAsset(id) {
+  const a = project.assets[id]; if (!a) return; const im = new Image();
+  im.onload = () => { const n = [16, 32, 64, 128, 256].find(v => v >= Math.max(im.naturalWidth, im.naturalHeight)) || 256; $('#texSize').value = n; texInit(n); tctx.imageSmoothingEnabled = false; tctx.drawImage(im, 0, 0); texEditing = id; $('#texName').value = a.name; texSync(); };
+  im.src = a.data;
+}
+$('#texImport').onclick = () => $('#fileTexImport').click();
+$('#fileTexImport').onchange = async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const data = await readFile(f); const im = new Image(); im.onload = () => { texPush(); tctx.imageSmoothingEnabled = false; tctx.drawImage(im, 0, 0, tc.width, tc.height); }; im.src = data; };
+$('#texSave').onclick = () => {
+  const data = tc.toDataURL('image/png'); const name = ($('#texName').value || 'texture').replace(/\s+/g, '_');
+  if (texEditing && project.assets[texEditing]) { const a = project.assets[texEditing]; a.data = data; a.name = name; a.w = tc.width; a.h = tc.height; commit(); refreshAll(); toast('Updated texture “' + name + '”'); return; }
+  const id = 'a' + uid(); project.assets[id] = { id, name, kind: 'texture', data, w: tc.width, h: tc.height };
+  const o = sel();
+  if ($('#texUse').checked && o) { o.textures.push(id); if ($('#texFit').checked && o.type !== 'global' && o.type !== 'circle') { o.rectLength = tc.width; o.rectHeight = tc.height; if (o.type === 'rectangle') o.type = 'sprite'; } }
+  texEditing = id; commit(); refreshAll(); texSync(); toast('Saved “' + name + '”' + (o && $('#texUse').checked ? ' on ' + o.name : ''));
+};
+(function () { const b = document.createElement('button'); b.id = 'texNew'; b.textContent = 'New blank texture'; b.onclick = () => { texEditing = null; $('#texName').value = 'texture' + (Object.keys(project.assets).length + 1); texInit(texSize()); }; $('#texSave').after(b); })();
+
+/* ---------- play ---------- */
+let rt = null, raf = 0, playing = false, lastT = 0, acc = 0;
+const gcv = $('#game'); const gctx = gcv.getContext('2d');
+function fitGame() {
+  const ws = $('#gameWs'); const W = project.settings.stageW, H = project.settings.stageH;
+  const aw = ws.clientWidth - 24, ah = ws.clientHeight - 24; if (aw <= 0) return;
+  const s = Math.max(.2, Math.min(aw / W, ah / H)); gcv.style.width = Math.floor(W * s) + 'px'; gcv.style.height = Math.floor(H * s) + 'px';
+}
+new ResizeObserver(fitGame).observe($('#gameWs'));
+async function play() {
+  stop(true);
+  logLines.length = 0; log('— Running ' + project.name + ' —', 'sys');
+  gcv.width = project.settings.stageW; gcv.height = project.settings.stageH;
+  const snapProj = JSON.parse(JSON.stringify({ settings: project.settings, assets: project.assets, objects: project.objects }));
+  rt = new GX.Runtime(snapProj, { print: (m, l) => log(m, l) });
+  try { rt.compileAll(); await rt.load(); rt.start(); } catch (e) { log('Could not start: ' + e.message, 'error'); return; }
+  playing = true; $('#btnPlay').disabled = true; $('#btnStop').disabled = false; setWs('game'); fitGame();
+  $('#gameBar').textContent = 'Running · click the game to focus · F8 to stop'; gcv.tabIndex = 0; gcv.focus();
+  lastT = performance.now(); acc = 0;
+  const loop = (t) => { if (!playing) return; acc += Math.min(0.1, (t - lastT) / 1000); lastT = t; let n = 0; while (acc >= 1 / 60 && n++ < 5) { rt.step(1 / 60); acc -= 1 / 60; } rt.render(gctx); raf = requestAnimationFrame(loop); };
+  raf = requestAnimationFrame(loop);
+}
+function stop(quiet) {
+  if (!playing && !rt) return; playing = false; cancelAnimationFrame(raf); if (rt) { rt.stop(); } $('#btnPlay').disabled = false; $('#btnStop').disabled = true;
+  if (!quiet) { $('#gameBar').textContent = 'Stopped.'; log('— Stopped —', 'sys'); setWs('vp'); }
+}
+$('#btnPlay').onclick = play; $('#btnStop').onclick = () => stop(false);
+const typing = (e) => /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+document.addEventListener('keydown', (e) => {
+  if (playing && wsCur === 'game' && !typing(e)) { if (e.key === 'F8') { stop(false); e.preventDefault(); return; } rt.key(e.key, true); if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault(); return; }
+  if (e.target === vp && e.code === 'Space') { spaceDown = true; e.preventDefault(); }
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); saveProject(); }
+  else if (mod && e.key.toLowerCase() === 'o') { e.preventDefault(); $('#fileOpen').click(); }
+  else if (e.key === 'F5') { e.preventDefault(); play(); }
+  else if (e.key === 'F8') { e.preventDefault(); stop(false); }
+  else if (!typing(e) && mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (!typing(e) && mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+  else if (!typing(e) && mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); }
+  else if (!typing(e) && (e.key === 'Delete') && wsCur === 'vp') deleteSelected();
+});
+document.addEventListener('keyup', (e) => { if (e.code === 'Space') spaceDown = false; if (playing) rt.key(e.key, false); });
+function gamePt(e) { const r = gcv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * gcv.width - gcv.width / 2, gcv.height / 2 - (e.clientY - r.top) / r.height * gcv.height]; }
+gcv.addEventListener('pointermove', (e) => { if (rt && playing) { const p = gamePt(e); rt.pointer(p[0], p[1]); } });
+gcv.addEventListener('pointerdown', (e) => { gcv.focus(); if (rt && playing) { const p = gamePt(e); rt.pointer(p[0], p[1], true, true); } });
+gcv.addEventListener('pointerup', () => { if (rt && playing) rt.pointer(0, 0, false); });
+gcv.addEventListener('pointerup', (e) => { if (rt && playing) { const p = gamePt(e); rt.pointer(p[0], p[1], false); } });
+
+/* ---------- files ---------- */
+function downloadFile(name, text, mime) {
+  const blob = new Blob([text], { type: mime || 'application/octet-stream' }); const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const fileName = () => (project.name || 'project').replace(/[^\w\-]+/g, '_');
+function projectJSON() { return JSON.stringify(project); }
+function saveProject() { downloadFile(fileName() + '.gxproj', projectJSON(), 'application/json'); dirty = false; lastSaved = new Date(); setStatus(); toast('Saved ' + fileName() + '.gxproj to your downloads'); }
+function normalize(p) {
+  if (!p || p.format !== 'gx-project' || !Array.isArray(p.objects)) throw new Error('This is not a g(x) project file.');
+  p.settings = Object.assign({ stageW: 480, stageH: 360, bg: '#1b1d22', autoPhysics: true }, p.settings || {}); p.assets = p.assets || {};
+  p.objects.forEach(o => { const d = defaults(o.type || 'rectangle', o.name || 'Object'); Object.keys(d).forEach(k => { if (o[k] === undefined) o[k] = d[k]; }); });
+  if (!p.objects.some(o => o.type === 'global')) { const g = defaults('global', 'Global'); g.id = 'global'; p.objects.unshift(g); }
+  return p;
+}
+function loadProject(p, msg) {
+  stop(true); project = normalize(p); selId = (project.objects.find(o => o.type !== 'global') || project.objects[0]).id;
+  undoStack.length = 0; redoStack.length = 0; undoStack.push(snap()); dirty = false; scriptIdx = 0; texEditing = null;
+  refreshAll(); fitView(); setStatus(); if (msg) toast(msg);
+}
+async function openProjectFile(f) {
+  try { const txt = await f.text(); const p = JSON.parse(txt); await makeBackup('before open', true); loadProject(p, 'Opened ' + f.name); }
+  catch (e) { toast('Could not open ' + f.name + ': ' + e.message); log('Open failed: ' + e.message, 'error'); }
+}
+$('#fileOpen').onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) openProjectFile(f); };
+
+/* ---------- backups ---------- */
+let sessionTimer = 0, rollingDirty = false;
+function scheduleSession() { rollingDirty = true; clearTimeout(sessionTimer); sessionTimer = setTimeout(saveSession, 1500); }
+async function saveSession() { try { await Store.set('session', { t: Date.now(), json: projectJSON() }); } catch (e) {} }
+async function makeBackup(kind, silent) {
+  const json = projectJSON(); const t = Date.now();
+  await Store.set('bak:' + t, { t, kind, name: project.name, size: json.length, json });
+  const keys = (await Store.keys('bak:')).sort();
+  const autos = []; for (const k of keys) { const v = await Store.get(k); if (v && v.kind === 'auto') autos.push(k); }
+  while (autos.length > 15) await Store.del(autos.shift());
+  if (!silent) toast('Backup saved'); if (bottomTab === 'bak') renderBackups();
+}
+setInterval(() => { if (rollingDirty && dirty) { rollingDirty = false; makeBackup('auto', true); } }, 120000);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveSession(); });
+window.addEventListener('pagehide', saveSession);
+window.addEventListener('beforeunload', (e) => { if (dirty) { saveSession(); e.preventDefault(); e.returnValue = ''; } });
+async function renderBackups() {
+  const b = $('#bottomBody'); const keys = (await Store.keys('bak:')).sort().reverse(); const rows = [];
+  for (const k of keys) { const v = await Store.get(k); if (v) rows.push(v); }
+  b.innerHTML = '<div style="font-family:var(--sans);margin-bottom:6px"><button id="bkNow">Back up now</button> <span class="muted small">Your work is also saved continuously as a session, and auto-backed-up every 2 minutes (last 15 kept). Stored in this browser only: use “Save to computer” for a real copy.</span></div>' +
+    (rows.length ? rows.map(v => '<div class="bak"><span>' + new Date(v.t).toLocaleString() + '</span><span class="muted">' + esc(v.kind) + ' · ' + esc(v.name) + ' · ' + Math.round(v.size / 1024) + ' KB</span><span class="sp"></span><button data-bk-restore="' + v.t + '">Restore</button><button data-bk-dl="' + v.t + '">Download</button><button data-bk-del="' + v.t + '">Delete</button></div>').join('') : '<div class="muted">No backups yet.</div>');
+}
+$('#bottomBody').addEventListener('click', async (e) => {
+  const t = e.target; if (t.id === 'bkNow') { await makeBackup('manual'); return; }
+  const r = t.dataset.bkRestore, d = t.dataset.bkDl, x = t.dataset.bkDel;
+  if (r) { const v = await Store.get('bak:' + r); if (v) { await makeBackup('before restore', true); loadProject(JSON.parse(v.json), 'Restored backup from ' + new Date(v.t).toLocaleTimeString()); renderBackups(); } }
+  if (d) { const v = await Store.get('bak:' + d); if (v) downloadFile(fileName() + '-backup-' + d + '.gxproj', v.json, 'application/json'); }
+  if (x) { await Store.del('bak:' + x); renderBackups(); }
+});
+$$('[data-btab]').forEach(b => b.onclick = () => {
+  const same = bottomTab === b.dataset.btab && $('#bottom').classList.contains('open'); bottomTab = b.dataset.btab;
+  $$('[data-btab]').forEach(x => x.setAttribute('aria-selected', String(x === b))); $('#bottom').classList.toggle('open', !same); renderBottom();
+});
+
+/* ---------- export ---------- */
+function buildExport() {
+  const data = JSON.stringify({ settings: project.settings, assets: project.assets, objects: project.objects }).replace(/</g, '\\u003c');
+  const lang = $('#src-lang').textContent, run = $('#src-runtime').textContent; const S = '<' + '/script>';
+  return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(project.name) + '</title>' +
+    '<style>html,body{height:100%;margin:0;background:#0b0c0e;overflow:hidden}body{display:flex;align-items:center;justify-content:center}canvas{image-rendering:pixelated;background:#000}#go{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#dfe3ea;font:600 20px system-ui;background:#0b0c0ecc;cursor:pointer}</style></head><body><canvas id="c"></canvas><div id="go">Click to play</div>\n' +
+    '<script type="application/json" id="gx-data">' + data + S + '\n<script>' + lang + S + '\n<script>' + run + S + '\n' +
+    '<script>(async function(){var P=JSON.parse(document.getElementById("gx-data").textContent),cv=document.getElementById("c"),W=P.settings.stageW,H=P.settings.stageH;cv.width=W;cv.height=H;var cx=cv.getContext("2d");' +
+    'function fit(){var s=Math.min(innerWidth/W,innerHeight/H);cv.style.width=Math.floor(W*s)+"px";cv.style.height=Math.floor(H*s)+"px"}fit();addEventListener("resize",fit);' +
+    'var rt=new GX.Runtime(P,{print:function(m,l){(l==="error"?console.error:console.log)(m)}});rt.compileAll();await rt.load();' +
+    'function pt(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*W-W/2,H/2-(e.clientY-r.top)/r.height*H]}' +
+    'document.getElementById("go").onclick=function(){this.remove();rt.start();var last=performance.now(),acc=0;' +
+    'addEventListener("keydown",function(e){rt.key(e.key,true);if(e.key.indexOf("Arrow")===0||e.key===" ")e.preventDefault()});addEventListener("keyup",function(e){rt.key(e.key,false)});' +
+    'cv.addEventListener("pointermove",function(e){var p=pt(e);rt.pointer(p[0],p[1])});cv.addEventListener("pointerdown",function(e){var p=pt(e);rt.pointer(p[0],p[1],true,true)});cv.addEventListener("pointerup",function(e){var p=pt(e);rt.pointer(p[0],p[1],false)});' +
+    '(function loop(t){acc+=Math.min(.1,(t-last)/1000);last=t;var n=0;while(acc>=1/60&&n++<5){rt.step(1/60);acc-=1/60}rt.render(cx);requestAnimationFrame(loop)})(last)}})()' + S + '\n</body></html>';
+}
+function openExport() {
+  const html = buildExport(); const kb = Math.round(html.length / 1024);
+  $('#exportBody').innerHTML = '<p>This builds one self-contained <code>.html</code> file with the g(x) runtime, your objects, textures, sounds and scripts inside. Open it in any browser, host it on itch.io or any static site, or wrap it in a desktop or mobile shell later.</p>' +
+    '<p>Size: <b>' + kb.toLocaleString() + ' KB</b> · Stage: ' + project.settings.stageW + '×' + project.settings.stageH + ' · ' + (project.objects.length - 1) + ' objects</p>' +
+    '<p style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="exDl">Download ' + esc(fileName()) + '.html</button><button id="exCopy">Copy HTML</button></p><p class="small muted">Exported games start with a click so the browser allows sound. Standalone .exe and .apk packaging is not built yet.</p>';
+  $('#exDl').onclick = () => { downloadFile(fileName() + '.html', html, 'text/html'); toast('Exported ' + fileName() + '.html'); };
+  $('#exCopy').onclick = () => { navigator.clipboard.writeText(html).then(() => toast('HTML copied'), () => toast('Copy was blocked. Use Download instead.')); };
+  $('#mExport').classList.add('on');
+}
+
+/* ---------- settings, learn, about ---------- */
+function applyTheme() {
+  const r = document.documentElement;
+  if (settings.mode === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', settings.mode);
+  const hex = settings.accent; r.style.setProperty('--accent', hex);
+  const [R, G, B] = hex2rgb(hex); const lum = (0.299 * R + 0.587 * G + 0.114 * B) / 255; r.style.setProperty('--accent-fg', lum > .6 ? '#111' : '#fff');
+  r.style.setProperty('--ui', settings.uiSize + 'px'); $('#code').style.fontSize = $('#hl').style.fontSize = settings.codeSize + 'px';
+  drawVp();
+}
+const ACCENTS = ['#478cbf', '#e0556a', '#f2a65a', '#6ecb8b', '#8e6bd9', '#26a69a', '#e84393', '#d4b400'];
+function openSettings() {
+  const ps = project.settings;
+  $('#settingsBody').innerHTML =
+    '<label>Theme</label><div class="two" style="grid-template-columns:repeat(3,1fr)">' + ['system', 'dark', 'light'].map(m => '<button data-mode="' + m + '" aria-pressed="' + (settings.mode === m) + '"' + (settings.mode === m ? ' class="primary"' : '') + '>' + m[0].toUpperCase() + m.slice(1) + '</button>').join('') + '</div>' +
+    '<label>Accent color</label><div><div class="sw">' + ACCENTS.map(c => '<button style="background:' + c + '" data-accent="' + c + '" aria-label="Accent ' + c + '"></button>').join('') + '<input type="color" id="sAccent" value="' + settings.accent + '" aria-label="Custom accent"></div></div>' +
+    '<label for="sUi">Interface size</label><input type="range" id="sUi" min="11" max="17" value="' + settings.uiSize + '">' +
+    '<label for="sCode">Code size</label><input type="range" id="sCode" min="11" max="20" value="' + settings.codeSize + '">' +
+    '<label for="sGrid">Viewport grid</label><input type="checkbox" id="sGrid"' + (settings.grid ? ' checked' : '') + '>' +
+    '<label for="sSnap">Snap to</label><select id="sSnap">' + [1, 5, 10, 20].map(v => '<option' + (settings.snap === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select>' +
+    '<label for="pName">Project name</label><input type="text" id="pName" value="' + esc(project.name) + '">' +
+    '<label for="pW">Stage size</label><div class="two"><input type="number" id="pW" min="64" max="1920" value="' + ps.stageW + '"><input type="number" id="pH" min="64" max="1080" value="' + ps.stageH + '"></div>' +
+    '<label for="pBg">Stage color</label><input type="color" id="pBg" value="' + ps.bg + '">' +
+    '<label for="pPhys">Auto physics</label><label><input type="checkbox" id="pPhys"' + (ps.autoPhysics ? ' checked' : '') + '> step the physics world every frame</label>';
+  $('#mSettings').classList.add('on');
+}
+$('#settingsBody').addEventListener('click', (e) => {
+  const m = e.target.closest('[data-mode]'), a = e.target.closest('[data-accent]');
+  if (m) { settings.mode = m.dataset.mode; lsSet('gx-settings', settings); applyTheme(); openSettings(); }
+  if (a) { settings.accent = a.dataset.accent; lsSet('gx-settings', settings); applyTheme(); $('#sAccent').value = settings.accent; }
+});
+$('#settingsBody').addEventListener('input', (e) => {
+  const t = e.target, ps = project.settings;
+  if (t.id === 'sAccent') settings.accent = t.value; else if (t.id === 'sUi') settings.uiSize = +t.value; else if (t.id === 'sCode') settings.codeSize = +t.value;
+  else if (t.id === 'sGrid') settings.grid = t.checked; else if (t.id === 'sSnap') settings.snap = +t.value;
+  else if (t.id === 'pName') { project.name = t.value || 'Untitled'; markDirty(); }
+  else if (t.id === 'pW') { ps.stageW = clampN(+t.value || 480, 64, 1920); markDirty(); } else if (t.id === 'pH') { ps.stageH = clampN(+t.value || 360, 64, 1080); markDirty(); }
+  else if (t.id === 'pBg') { ps.bg = t.value; markDirty(); } else if (t.id === 'pPhys') { ps.autoPhysics = t.checked; markDirty(); }
+  lsSet('gx-settings', settings); applyTheme();
+});
+const LEARN = '<p>Integral is the scripting language for g(x). It reads like plain English, with <code>(parentheses)</code> around numbers and text, <code>&lt;angle brackets&gt;</code> around true/false values and <code>/slashes/</code> around vectors. Every block ends with <code>end</code>. Open the Script tab and use the Blocks list to insert any command.</p>' +
+  '<h3>Lesson 1 · Move something</h3><pre>on start\n  indefinitely\n    edit att.x = (att.x + 1)\n  end</pre><p>Scripts begin with an event. <code>indefinitely</code> runs once per frame. <code>att.x</code> is an attribute of the object running the script.</p>' +
+  '<h3>Lesson 2 · Keys and conditions</h3><pre>on start\n  indefinitely\n    if &lt;key (space) down?&gt; then\n      edit att.y = (att.y + 4)\n    end\n  end</pre>' +
+  '<h3>Lesson 3 · Messages and timers</h3><pre>on start\n  create timer (clock)\n  start timer (clock)\n  indefinitely\n    wait (1) secs\n    broadcast message (tick) with data (secs of timer (clock))\n  end\non message (tick)\n  print((received data))</pre>' +
+  '<h3>Lesson 4 · Constructs</h3><pre>on start\n  repeat (5)\n    construct new (circle) with radius (6) at (0,0) with ID (dot)\n  end\non construct start\n  indefinitely\n    edit att.x = (att.x + (random (-3) to (3)))\n  end</pre><p>Constructs are objects made by a script while the game runs. They run the <code>on construct start</code> event of the object that created them.</p>' +
+  '<h3>Notes on this build</h3><p>Directions are in degrees, 0 = right, counter-clockwise. <code>repeat</code> runs all its loops in one frame unless it contains a wait, so <code>wait (0) secs</code> advances one frame. Write coordinates without a space after the comma: <code>(10,20)</code>. A video tutorial series is not part of this build.</p>';
+function openLearn() { $('#learnBody').innerHTML = LEARN; $('#mLearn').classList.add('on'); }
+$$('.modal').forEach(m => { m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.classList.remove('on'); }); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $$('.modal.on').forEach(m => m.classList.remove('on')); });
+
+/* ---------- menus + actions ---------- */
+function act(a) {
+  switch (a) {
+    case 'new': makeBackup('before new', true).then(() => { loadProject(newProject(), 'New project'); }); break;
+    case 'open': $('#fileOpen').click(); break; case 'save': saveProject(); break;
+    case 'backupNow': makeBackup('manual'); break;
+    case 'showBackups': bottomTab = 'bak'; $$('[data-btab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.btab === 'bak'))); $('#bottom').classList.add('open'); renderBottom(); break;
+    case 'export': openExport(); break; case 'settings': openSettings(); break;
+    case 'undo': undo(); break; case 'redo': redo(); break;
+    case 'addRect': addObject('rectangle'); break; case 'addCircle': addObject('circle'); break; case 'addSprite': addObject('sprite'); break; case 'addEmpty': addObject('empty'); break;
+    case 'dup': duplicateSelected(); break; case 'del': deleteSelected(); break;
+    case 'learn': openLearn(); break;
+    case 'about': toast('g(x) prototype · objects, Integral scripting, textures, backups, export'); break;
+  }
+}
+document.addEventListener('click', (e) => {
+  const m = e.target.closest('.menu');
+  $$('.menu.open').forEach(x => { if (x !== m) x.classList.remove('open'); });
+  if (m && e.target.closest('.menu > button')) m.classList.toggle('open');
+  const b = e.target.closest('[data-act]'); if (b) { act(b.dataset.act); if (m) m.classList.remove('open'); }
+});
+
+/* ---------- boot ---------- */
+(async function boot() {
+  applyTheme();
+  await Store.open();
+  const s = await Store.get('session');
+  if (s && s.json) { try { loadProject(JSON.parse(s.json)); toast('Restored your last session from ' + new Date(s.t).toLocaleString()); } catch (e) { project = newProject(); } }
+  if (!project.objects.some(o => o.id === selId)) selId = project.objects[1] ? project.objects[1].id : 'global';
+  undoStack.length = 0; undoStack.push(snap()); dirty = false;
+  refreshAll(); renderBottom(); setStatus();
+  requestAnimationFrame(() => { resizeVp(); fitView(); });
+  log('g(x) ready. Press Play (F5) to run the project.', 'sys');
+})();
+
+</script>
+</body>
+</html>
