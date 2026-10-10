@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>g(x) Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -75,7 +75,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 .panel{display:flex;flex-direction:column;min-height:0;min-width:0}
 .panel.grow{flex:1 1 0}
 .panel.half{flex:0 0 38%;border-top:1px solid var(--line)}
-.ph{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg2);border-bottom:1px solid var(--line);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2)}
+.ph{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg2);border-bottom:1px solid var(--line);font-weight:600;font-size:12px;letter-spacing:0;text-transform:none;color:var(--fg2)}
 .ph .sp{flex:1}
 .ph button{padding:1px 7px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:400}
 .pb{overflow:auto;min-height:0;flex:1}
@@ -131,6 +131,24 @@ input[type=checkbox]{accent-color:var(--accent)}
 .codewrap pre .indent-guide{display:inline-block;background-image:repeating-linear-gradient(to right, transparent 0, transparent 31px, color-mix(in srgb, var(--line) 62%, transparent) 31px, color-mix(in srgb, var(--line) 62%, transparent) 32px);background-size:32px 100%;background-position:0 0}
 .codewrap textarea{background:transparent;color:transparent;caret-color:var(--fg);resize:none;outline:none;border-radius:0}
 .t-kw{color:var(--c-kw)}.t-ev{color:var(--c-ev);font-weight:500}.t-att{color:var(--c-att)}.t-num{color:var(--c-num)}.t-cm{color:var(--c-cm);font-style:italic}.t-br{color:var(--c-br)}
+/* Scratch-inspired draggable blocks with nested backs */
+.block-editor{flex:1;min-height:0;min-width:0;flex-direction:column;background:var(--bg0);overflow:hidden}
+.block-editor[hidden]{display:none!important}
+.block-workspace{flex:1;min-height:0;overflow:auto;padding:18px;background:var(--bg0)}
+.block-stack{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:max-content;padding:4px 4px 24px}
+.code-block{position:relative;display:block;min-height:36px;width:max-content;max-width:min(820px,calc(100vw - 300px));min-width:300px;color:#fff;border-radius:7px 7px 4px 4px;box-shadow:inset 0 -3px rgba(0,0,0,.17);user-select:none}
+.code-block[draggable="true"]{cursor:grab}.code-block.dragging{opacity:.45}.code-block.drop-target{outline:2px dashed var(--fg);outline-offset:2px}
+.code-block .block-line{display:flex;align-items:center;gap:7px;min-height:34px;padding:5px 8px;font:500 13px/1.45 var(--sans)}
+.code-block input{flex:1;min-width:220px;max-width:680px;background:rgba(255,255,255,.94);color:#222;border:0;border-radius:3px;padding:5px 7px;font:13px/1.45 var(--sans);user-select:text}
+.code-block .block-grip{font:18px/1 var(--sans);opacity:.72;cursor:grab;touch-action:none}
+.code-block .block-no{font:11px var(--sans);opacity:.8;min-width:17px;text-align:right}
+.code-block.event{background:#c64a43}.code-block.control{background:#d69b22;color:#242016}.code-block.logic{background:#5c9b4c}.code-block.motion{background:#397fc4}.code-block.looks{background:#8652b7}.code-block.data{background:#d18a2c;color:#241b0e}.code-block.sound{background:#bd5aa0}.code-block.custom{background:#66717e}
+.block-children{position:relative;margin:0 0 0 18px;padding:5px 0 8px 13px;border-left:12px solid rgba(0,0,0,.18);border-bottom:9px solid rgba(0,0,0,.18);border-radius:0 0 0 7px;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.block-children>.code-block{margin-left:0}
+.block-editor .block-addbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 10px;background:var(--bg1);border-top:1px solid var(--line)}
+.block-addbar select{font:13px var(--sans)}
+.block-editor .block-help{font:12px var(--sans);color:var(--fg2)}
+@media(max-width:760px){.block-workspace{padding:12px}.code-block{max-width:calc(100vw - 32px);min-width:250px}.code-block input{min-width:150px}.block-addbar{padding:8px}.block-addbar .muted{flex-basis:100%}}
 .diag{max-height:96px;overflow:auto;background:var(--bg1);border-top:1px solid var(--line);padding:4px 8px;font:12px var(--mono)}
 .diag .e{color:var(--err)}.diag .ok{color:var(--ok)}
 .palette{width:236px;flex:none;background:var(--bg1);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
@@ -182,14 +200,202 @@ input[type=checkbox]{accent-color:var(--accent)}
 #toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:var(--bg3);color:var(--fg);border:1px solid var(--line);padding:7px 14px;border-radius:6px;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:90vw}
 #toast.on{display:block}
 #toast button{margin-left:10px}
-@media (max-width: 980px){ #main{grid-template-columns:170px minmax(0,1fr) 210px} .palette{display:none} .tabs button{padding:3px 8px} }
+/* ---------- flatter, more direct workspace styling ---------- */
+:root{--line:color-mix(in srgb,var(--fg) 15%,transparent);--bg2:color-mix(in srgb,var(--bg1) 78%,var(--fg) 4%);--bg3:color-mix(in srgb,var(--bg1) 65%,var(--fg) 8%)}
+button,input[type=text],input[type=number],select,textarea{border-radius:2px}
+button{box-shadow:none}
+.dropdown{border-radius:2px;box-shadow:0 5px 18px #0002}
+.tabs{border-radius:2px}
+.tabs button[aria-selected=true]{box-shadow:inset 0 -2px 0 var(--accent)}
+.ph{background:transparent;border-bottom:1px solid var(--line);letter-spacing:.035em}
+.row{border-radius:2px}
+.sec{border-radius:2px;background:transparent}
+.sec>summary{border-radius:0;background:var(--bg2)}
+.sec[open]>summary{border-radius:0}
+.thumb{border-radius:2px}
+.vptools{border-radius:2px;box-shadow:0 1px 4px #0001}
+.card{border-radius:2px;box-shadow:0 12px 40px #0003}
+.card h2{position:sticky;top:0;z-index:2}
+#toast{border-radius:2px}
+/* Documentation is a navigable reference, not a stack of chat-like cards. */
+.docs-card{width:min(1000px,100%);height:min(780px,92vh);max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.docs-card h2{flex:none}
+.docs-layout{display:grid;grid-template-columns:245px minmax(0,1fr);flex:1;min-height:0;overflow:hidden}
+.docs-nav{border-right:1px solid var(--line);background:var(--bg0);min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.docs-search-wrap{padding:10px;border-bottom:1px solid var(--line)}
+.docs-search-wrap input{width:100%;padding:8px 9px;background:var(--bg1)}
+#docsTree{overflow:auto;min-height:0;padding:4px 0 18px}
+.docs-group{margin:0 0 7px}
+.docs-group-title{padding:9px 12px 4px;color:var(--fg2);font-size:12px;font-weight:600;text-transform:none;letter-spacing:0}
+.docs-link{display:block;width:100%;text-align:left;padding:7px 12px 7px 18px;background:transparent;border:0;border-left:2px solid transparent;border-radius:0;white-space:normal;line-height:1.3}
+.docs-link:hover{background:var(--bg2)}
+.docs-link.active{background:var(--accent-soft);border-left-color:var(--accent);color:var(--fg)}
+.docs-article{overflow:auto;min-height:0;padding:26px clamp(18px,4vw,42px) 42px;user-select:text;line-height:1.65;max-width:none}
+.docs-crumb{font-size:12px;text-transform:none;letter-spacing:0;color:var(--fg3);margin-bottom:10px}
+.docs-article h2{position:static;background:transparent;border:0;padding:0;margin:0 0 18px;font-size:24px;font-weight:500}
+.docs-article h3{margin:25px 0 7px;font-size:15px;font-weight:600}
+.docs-article p,.docs-article li{color:var(--fg2)}
+.docs-article p{margin:10px 0 15px}
+.docs-article li{margin:5px 0}
+.docs-article b{color:var(--fg)}
+.docs-article code{background:var(--bg2);padding:1px 4px;border-radius:2px;color:var(--fg)}
+.docs-article pre{padding:14px 16px;border-left:2px solid var(--accent);border-radius:0;background:var(--bg0);line-height:1.65;white-space:pre;overflow:auto;color:var(--fg)}
+.docs-lead{font-size:16px;color:var(--fg)!important;line-height:1.7}
+.docs-no-results{padding:12px;color:var(--fg3);font-size:12px}
+/* ---------- touch and small screens ---------- */
+.mobonly{display:none}
+button,select,input,.row{touch-action:manipulation}
+#mobnav{display:none}
+#scrim{display:none}
+@media (hover:none){ .thumb .x{display:block} }
+@media (pointer:coarse){
+  button{min-height:36px}
+  .row{padding:8px 8px}
+  .dropdown button{padding:10px 12px}
+  .sec .body input[type=text],.sec .body input[type=number],.sec .body select{min-height:34px}
+  .tools button,.swatches button{min-height:38px}
+  .swatches button{height:30px}
+  .thumb{padding:4px}
+}
+#touchpad{display:none;position:absolute;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:0 16px;justify-content:space-between;align-items:flex-end;pointer-events:none;z-index:5}
+body.touch #touchpad{display:flex}
+#touchpad button{pointer-events:auto;touch-action:none;width:56px;height:56px;min-height:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.28);font-size:20px;padding:0;-webkit-user-select:none}
+#touchpad button.down{background:var(--accent);color:var(--accent-fg)}
+.dpad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:4px}
+.dpad [data-k="up arrow"]{grid-column:2;grid-row:1}.dpad [data-k="left arrow"]{grid-column:1;grid-row:2}.dpad [data-k="right arrow"]{grid-column:3;grid-row:2}.dpad [data-k="down arrow"]{grid-column:2;grid-row:3}
+.abtns{display:flex;gap:12px;align-items:flex-end}
+.keyrow{flex:none;gap:4px;padding:4px 6px;background:var(--bg2);border-top:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+.keyrow button{min-width:40px;min-height:36px;font:15px var(--mono);padding:0 8px;flex:none}
+@media (max-width: 760px){
+  html,body{height:100%}
+  #app{height:100dvh;grid-template-rows:calc(44px + env(safe-area-inset-top,0px)) minmax(0,1fr) calc(50px + env(safe-area-inset-bottom,0px)) 28px}
+  #top{padding:env(safe-area-inset-top,0px) max(6px,env(safe-area-inset-right,0px)) 0 max(6px,env(safe-area-inset-left,0px));gap:2px}
+  .mobonly{display:inline-block}
+  .keyrow.mobonly{display:flex}
+  .desktop-only{display:none!important}
+  .lbl{display:none}
+  .logo{padding:0 4px 0 0}
+  #btnPlay,#btnStop{min-width:40px;padding:3px 8px}
+  .menu>button{padding:3px 7px}
+  #app{grid-template-columns:minmax(0,1fr)}
+  #main{display:block;position:relative;min-width:0;overflow:hidden}
+  #center{min-width:0;width:100%}
+  #center{height:100%}
+  .dock{display:none;position:fixed;z-index:60;top:calc(44px + env(safe-area-inset-top,0px));bottom:0;width:min(88vw,340px);max-width:100%;border:0;box-shadow:0 0 30px rgba(0,0,0,.4)}
+  .dock.right{right:0;left:auto}
+  .dock:not(.right){left:0}
+  body.drawer-left .dock:not(.right){display:flex;animation:slideL .2s ease}
+  body.drawer-right .dock.right{display:flex;animation:slideR .2s ease}
+  @keyframes slideL{from{transform:translateX(-100%)}}
+  @keyframes slideR{from{transform:translateX(100%)}}
+  #scrim{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.45)}
+  body.drawer-left #scrim,body.drawer-right #scrim{display:block}
+  #mobnav{display:flex;justify-content:center;align-items:stretch;background:var(--bg1);border-top:1px solid var(--line);padding:0 4px env(safe-area-inset-bottom,0px)}
+  #mobnav .tabs{margin:0;width:100%;border-radius:0;background:transparent;padding:4px 0;gap:4px}
+  #mobnav .tabs button{flex:1;padding:0 4px;min-height:40px;font-size:14px}
+  #mobnav .tabs button[disabled]{display:none}
+  .vphint{display:block;font-size:11px;right:8px;bottom:6px}
+  .vptools{max-width:calc(100% - 16px);flex-wrap:wrap}
+  .vptools .info{display:none}
+  #scriptWs{flex-direction:column}
+  .sidelist{width:auto;flex-direction:row;border-right:0;border-bottom:1px solid var(--line);max-height:46px;overflow-x:auto}
+  .sidelist .ph{flex:none;border-bottom:0;border-right:1px solid var(--line)}
+  .sidelist .pb{display:flex;overflow-x:auto;overflow-y:hidden;align-items:center}
+  .sidelist .pb .row{flex:none}.sidelist .pb>.muted{display:none}
+  .edbar input{width:100px}
+  .editor{font:16px/24px var(--mono)}
+  #code,#hl{font-size:16px!important}
+  .gutter{width:38px}
+  .palette{position:fixed;display:none;left:0;right:0;bottom:calc(78px + env(safe-area-inset-bottom,0px));height:48vh;width:auto;z-index:50;border:1px solid var(--line);border-radius:10px 10px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.35)}
+  body.blocks-open .palette{display:flex}
+  .palette button.snip{padding:9px 14px;font-size:13px}
+  #texWs{flex-direction:column}
+  .texside{width:auto;flex-direction:row;flex-wrap:wrap;align-items:flex-start;max-height:44%;border-right:0;border-bottom:1px solid var(--line);gap:6px 10px}
+  .texside>*{flex:1 1 140px}
+  .texside .tools{flex:1 1 100%;grid-template-columns:repeat(9,1fr)}
+  .texside .swatches{flex:1 1 100%;grid-template-columns:repeat(16,1fr)}
+  .texstage{padding:8px}
+  input[type=text],input[type=number],select,textarea{font-size:16px}
+  .card .cb{grid-template-columns:1fr}
+  .card{max-height:92dvh}
+  .docs-card{height:calc(100dvh - 20px);max-height:calc(100dvh - 20px);width:100%}
+  .docs-layout{grid-template-columns:minmax(112px,34%) minmax(0,1fr)}
+  .docs-search-wrap{padding:6px}
+  .docs-search-wrap input{padding:8px 6px}
+  .docs-link{padding:9px 6px 9px 9px;font-size:12px}
+  .docs-group-title{padding:10px 7px 4px;font-size:10px}
+  .docs-article{padding:18px 13px 30px;font-size:13px}
+  .docs-article h2{font-size:21px}
+  .docs-article pre{padding:10px;font-size:11px}
+  #toast{bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+  #bottomBody{bottom:28px;height:42vh}
+  #bottomHead{padding:0 8px}
+  .gamebar{font-size:10px}
+}
+@media (max-width: 760px) and (max-height: 520px){
+  #app{grid-template-rows:calc(40px + env(safe-area-inset-top,0px)) minmax(0,1fr) calc(44px + env(safe-area-inset-bottom,0px)) 24px}
+  #mobnav .tabs button{min-height:34px}
+  .dock{top:calc(40px + env(safe-area-inset-top,0px))}
+}
+
+@media (max-width: 760px){
+  #top > button[data-act]:not([data-act="settings"]){display:none}
+  #mobnav .tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
+  #mobnav .tabs button{font-size:11.5px;padding:0 2px}
+  #animWs{padding:8px!important}
+  #animWs > div:nth-child(2){grid-template-columns:minmax(0,1fr)!important}
+  #vecCanvas{width:min(640px,calc(100vw - 32px))!important;height:min(640px,calc(100vw - 32px))!important;min-width:0!important;min-height:0!important}
+  .gx-monitor{max-width:60vw}
+}
+#vec,#vecCanvas,#game,#vp,#texCanvas{touch-action:none}
+@media (max-width: 980px) and (min-width: 761px){ #main{grid-template-columns:170px minmax(0,1fr) 210px} .palette{display:none} .tabs button{padding:3px 8px} }
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+/* Direct, flat interface pass */
+:root{--line:color-mix(in srgb,var(--fg) 11%,transparent);--accent-soft:color-mix(in srgb,var(--accent) 12%,transparent)}
+button{background:transparent;border-color:transparent;border-radius:0;box-shadow:none;transition:background-color .08s ease}
+button:hover,button:focus-visible{background:var(--bg3);filter:none}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:none}
+input[type=text],input[type=number],select,textarea{border:0;border-bottom:1px solid var(--line);border-radius:0;background:color-mix(in srgb,var(--bg0) 65%,transparent)}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{border-bottom-color:var(--accent);outline:none}
+button.primary, #btnPlay, #btnStop{background:transparent;color:var(--fg);border-color:transparent}
+button.primary:hover,#btnPlay:hover,#btnStop:hover{background:var(--bg3);color:var(--fg)}
+#top,.ph,.edbar,.card h2,.sec>summary,.dropdown,.tabs,.vptools,.card,.sec,.thumb,.docs-nav{border-radius:0;box-shadow:none}
+#top{border-bottom:0}
+.ph,.edbar,.card h2{border-bottom:0}
+.panel.half,.dock,.dock.right,.sec[open]>summary,.docs-nav,.docs-link.active{border-color:transparent}
+.tabs{background:transparent;padding:0}
+.tabs button[aria-selected=true]{background:var(--bg3);box-shadow:none}
+.row.sel{box-shadow:none;background:var(--accent-soft)}
+.docs-link{border-left:0}
+.docs-link.active{background:var(--accent-soft);font-weight:600}
+.docs-search-wrap{border-bottom:0}
+.docs-article pre{border-left:0}
+.logo,.dropdown button kbd,.row .tag,.vptools .info,.gamebar,#bottomBody,#bottomHead .status{font-family:var(--sans)}
+.docs-article code,.docs-article pre,.card code,.card pre{font-family:var(--mono)}
+/* Documentation occupies the entire viewport. The close control appears only near the top edge. */
+#mLearn.modal{padding:0;align-items:stretch;justify-content:stretch;background:var(--bg0)}
+#mLearn .docs-card{position:relative;width:100%;height:100%;max-height:none;max-width:none;border:0;overflow:hidden;display:flex;flex-direction:column;background:var(--bg0)}
+#mLearn .card h2{position:absolute;top:0;left:0;right:0;height:42px;padding:0 12px;background:var(--bg0);z-index:10;transform:translateY(-100%);transition:transform .16s ease}
+#mLearn.top-visible .card h2{transform:translateY(0)}
+#mLearn .card h2 span{font-size:13px;font-weight:500}
+#mLearn .card h2 button{font-size:20px;padding:2px 8px}
+#mLearn .docs-layout{height:100%;padding-top:0;grid-template-columns:250px minmax(0,1fr)}
+#mLearn.top-visible .docs-layout{padding-top:42px}
+#mLearn .docs-nav{background:var(--bg0)}
+#mLearn .docs-article{padding:clamp(22px,5vw,64px);max-width:1000px;width:100%;justify-self:center}
+#mLearn.top-visible .docs-article{padding-top:30px}
+@media(max-width:650px){#mLearn .docs-layout{grid-template-columns: minmax(100px,34%) minmax(0,1fr)}#mLearn .docs-article{padding:18px 14px 32px}#mLearn .docs-article h2{font-size:21px}.docs-link{padding:8px 9px}.docs-group-title{padding-left:9px}}
+/* Gradients are removed from interface surfaces; the scene checkerboard remains a canvas texture. */
+.dropdown,.thumb img{background-image:none}
+
 </style>
 </head>
 <body>
 <div id="app">
   <header id="top">
     <span class="logo">g(x)</span>
+    <button id="btnObjects" class="ghost mobonly" aria-label="Open objects and assets">☰</button>
     <div class="menu" data-menu="project"><button>Project</button><div class="dropdown">
       <button data-act="new">New project</button>
       <button data-act="open">Open from computer… <kbd>Ctrl+O</kbd></button>
@@ -199,6 +405,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <hr><button data-act="export">Export playable HTML…</button>
       <button data-act="exportExe">Export as .exe build package…</button>
       <button data-act="settings">Project &amp; editor settings…</button>
+      <button data-act="learn" class="mobonly">Learn Integral</button>
     </div></div>
     <div class="menu" data-menu="edit"><button>Edit</button><div class="dropdown">
       <button data-act="undo">Undo <kbd>Ctrl+Z</kbd></button>
@@ -206,7 +413,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <hr><button data-act="addRect">Add rectangle</button>
       <button data-act="addCircle">Add circle</button>
       <button data-act="addSprite">Add sprite</button>
-      <button data-act="addEmpty">Add empty object</button><button data-act="addLight">Add 2D light</button>
+      <button data-act="addEmpty">Add empty object</button><button data-act="addLight">Add 2D light</button><button data-act="addCamera">Add camera</button>
       <hr><button data-act="dup">Duplicate <kbd>Ctrl+D</kbd></button>
       <button data-act="del">Delete <kbd>Del</kbd></button>
     </div></div>
@@ -217,7 +424,7 @@ input[type=checkbox]{accent-color:var(--accent)}
     <button data-act="addRect" title="Add rectangle">+ Rect</button>
     <button data-act="addCircle" title="Add circle">+ Circle</button>
     <button data-act="addSprite" title="Add sprite">+ Sprite</button><button data-act="addCamera" title="Add runtime camera">+ Camera</button>
-    <div class="menu" data-menu="help"><button>Help</button><div class="dropdown">
+    <div class="menu desktop-only" data-menu="help"><button>Help</button><div class="dropdown">
       <button data-act="learn">Learn Integral</button>
       <button data-act="about">About g(x)</button>
     </div></div>
@@ -230,16 +437,17 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button role="tab" id="btn3D" aria-selected="false" title="Toggle the experimental 3D scene editor">3D</button>
     </nav>
     <div class="runbar">
-      <button id="btnPlay" title="Run (F5)">▶ Play</button>
-      <button id="btnStop" title="Stop (F8)" disabled>■ Stop</button>
+      <button id="btnPlay" title="Run (F5)">▶<span class="lbl"> Play</span></button>
+      <button id="btnStop" title="Stop (F8)" disabled>■<span class="lbl"> Stop</span></button>
     </div>
-    <button class="ghost" data-act="settings" title="Settings">⚙</button>
+    <button class="ghost" data-act="settings" title="Settings" aria-label="Settings">⚙</button>
+    <button id="btnInsp" class="ghost mobonly" aria-label="Open inspector">Props</button>
   </header>
 
   <div id="main">
     <aside class="dock">
       <section class="panel grow">
-        <div class="ph"><span>Objects</span><span class="sp"></span><button data-act="addRect" title="Add object">+ Add</button></div>
+        <div class="ph"><span>Objects</span><span class="sp"></span><button data-act="addRect" title="Add object">+ Add</button><button class="ghost mobonly closeDrawer" aria-label="Close">✕</button></div>
         <div class="pb"><ul class="tree" id="tree"></ul></div>
       </section>
       <section class="panel half">
@@ -251,22 +459,23 @@ input[type=checkbox]{accent-color:var(--accent)}
       <div class="ws on" id="vpWs"><div id="vpWrap">
         <canvas id="vp" tabindex="0" aria-label="Scene viewport"></canvas>
         <div class="vptools"><span id="shape3DTools" style="display:none"><button data-3dshape="plane">+ Plane</button><button data-3dshape="cube">+ Cube</button><button data-3dshape="sphere">+ Sphere</button><button data-3dshape="prism">+ Prism</button><button data-3dshape="cylinder">+ Cylinder</button><button data-3dshape="cone">+ Cone</button></span><button id="zoomFit">Fit</button><button id="zoomOut">−</button><button id="zoomIn">+</button><button id="camCenter" title="Center camera on selected object">Center</button><button id="camReset" title="Reset camera view">Reset camera</button><span class="info" id="vpInfo"></span></div>
-        <div class="vphint">Drag to move · wheel to zoom · Space or right-drag to pan · arrows nudge · Shift = 10px</div>
+        <div class="vphint">Drag to move  /  wheel to zoom  /  Space or right-drag to pan  /  arrows nudge  /  Shift = 10px</div>
       </div></div>
       <div class="ws" id="scriptWs">
         <div class="sidelist"><div class="ph"><span>Scripts</span><span class="sp"></span><button id="addScript">+ New</button></div><div class="pb" id="scriptList"></div></div>
         <div class="edcol">
-          <div class="edbar"><span class="muted">Name</span><input type="text" id="scriptName" aria-label="Script name"><span class="sp" style="flex:1"></span><button id="delScript">Delete script</button></div>
-          <div class="editor"><div class="gutter" id="gutter"></div><div class="codewrap"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Integral script"></textarea></div></div>
+          <div class="edbar"><span class="muted">Name</span><input type="text" id="scriptName" aria-label="Script name"><span class="sp" style="flex:1"></span><button id="btnBlocks" aria-pressed="false">Blocks</button><button id="btnPalette" class="mobonly">Palette</button><button id="delScript">Delete</button></div>
+          <div class="editor" id="textEditor"><div class="gutter" id="gutter"></div><div class="codewrap"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Integral script"></textarea></div></div><div id="blockEditor" class="block-editor" aria-label="Block-based Integral editor" hidden><div class="block-workspace" id="blockWorkspace"></div><div class="block-addbar"><select id="blockType" aria-label="Block type"><option value="event">Events</option><option value="motion">Motion</option><option value="looks">Looks</option><option value="control">Control</option><option value="logic">Logic</option><option value="data">Data</option><option value="sound">Sound</option><option value="custom">Other</option></select><button id="addBlock">Add block</button><span class="muted small">Edit each block, then switch to Code for the same script as text.</span></div></div>
+          <div class="keyrow mobonly" id="keyrow" aria-label="Code keys"></div>
           <div class="diag" id="diag"></div>
         </div>
-        <div class="palette"><div class="ph"><span>Blocks</span></div><div class="pb" id="palette"></div></div>
+        <div class="palette" id="paletteBox"><div class="ph"><span>Blocks</span><span class="sp"></span><button class="ghost mobonly" id="closeBlocks">✕</button></div><div class="pb" id="palette"></div></div>
       </div>
       <div class="ws" id="animWs" style="flex-direction:column;overflow:auto;padding:10px;gap:10px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><strong>Keyframe animations</strong><span class="sp"></span><button id="animNew">+ New animation</button><button id="animPlay" class="primary">Preview</button><button id="animStop">Stop preview</button></div>
         <div style="display:grid;grid-template-columns:minmax(160px,230px) minmax(0,1fr);gap:10px;min-height:180px;flex:1">
           <section class="sec" style="padding:8px;overflow:auto"><label>Animation ID</label><select id="animSelect" style="width:100%"></select><label style="display:block;margin-top:8px">Target object</label><select id="animTarget" style="width:100%"></select><label style="display:block;margin-top:8px">Playback</label><select id="animLoop" style="width:100%"><option value="once">Play once</option><option value="loop">Loop</option><option value="pingpong">Ping-pong</option></select><label style="display:block;margin-top:8px">Duration (seconds)</label><input id="animDuration" type="number" min="0.05" step="0.05" value="1" style="width:100%"><div style="display:flex;gap:5px;margin-top:8px"><button id="animAddKey">+ Keyframe</button><button id="animDel">Delete animation</button></div><p class="muted small">Keyframes animate position, rotation, and scale. Use <code>playAnim(animationID)</code> and <code>pauseAnim(animationID)</code> in scripts.</p></section>
-          <section class="sec" style="padding:8px;min-width:0"><div class="ph" style="margin:-8px -8px 8px">Timeline · select a keyframe to edit</div><div id="animTimeline" style="display:flex;gap:6px;align-items:stretch;min-height:72px;overflow-x:auto;padding:4px"></div><div id="animKeyEditor" class="two" style="grid-template-columns:repeat(4,minmax(80px,1fr));gap:8px"></div></section>
+          <section class="sec" style="padding:8px;min-width:0"><div class="ph" style="margin:-8px -8px 8px">Timeline  /  select a keyframe to edit</div><div id="animTimeline" style="display:flex;gap:6px;align-items:stretch;min-height:72px;overflow-x:auto;padding:4px"></div><div id="animKeyEditor" class="two" style="grid-template-columns:repeat(4,minmax(80px,1fr));gap:8px"></div></section>
         </div>
       </div>
       <div class="ws" id="texWs">
@@ -277,7 +486,7 @@ input[type=checkbox]{accent-color:var(--accent)}
           <div class="tools" id="texTools"></div>
           <div class="two"><label class="muted small">Color<br><input type="color" id="texColor" value="#ff6b3d"></label><label class="muted small">Brush<br><input type="number" id="texBrush" min="1" max="16" value="1"></label></div>
           <div class="swatches" id="swatches"></div>
-          <div class="two"><label class="muted small">Size<br><select id="texSize"><option>16</option><option>32</option><option selected>64</option><option>128</option><option>256</option></select></label><label class="muted small">Zoom<br><select id="texZoom"><option value="4">4×</option><option value="6">6×</option><option value="8" selected>8×</option><option value="12">12×</option><option value="16">16×</option></select></label></div>
+          <div class="two"><label class="muted small">Size<br><select id="texSize"><option>16</option><option>32</option><option selected>64</option><option>128</option><option>256</option></select></label><label class="muted small">Zoom<br><select id="texZoom"><option value="fit">Fit</option><option value="4">4×</option><option value="6">6×</option><option value="8" selected>8×</option><option value="12">12×</option><option value="16">16×</option></select></label></div>
           <div class="two"><button id="texUndo">Undo</button><button id="texRedo">Redo</button><button id="texFlipH">Flip ↔</button><button id="texFlipV">Flip ↕</button><button id="texClear">Clear</button><button id="texGrid">Grid</button></div>
           <label class="muted small">Name<br><input type="text" id="texName" value="texture1" style="width:100%"></label>
           <button class="primary" id="texSave">Save as texture</button>
@@ -309,13 +518,16 @@ input[type=checkbox]{accent-color:var(--accent)}
         </div>
         <div class="texstage"><canvas id="texCanvas"></canvas><svg id="vecCanvas" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="application" aria-label="Vector costume canvas" hidden></svg></div>
       </div>
-      <div class="ws" id="gameWs"><canvas id="game"></canvas><div class="gamebar" id="gameBar">Press Play to run the project.</div><div id="runtimeOverlays"></div></div>
+      <div class="ws" id="gameWs"><canvas id="game"></canvas><div class="gamebar" id="gameBar">Press Play to run the project.</div>
+        <div id="touchpad" aria-label="Touch controls"><div class="dpad"><button data-k="up arrow" aria-label="Up">▲</button><button data-k="left arrow" aria-label="Left">◀</button><button data-k="right arrow" aria-label="Right">▶</button><button data-k="down arrow" aria-label="Down">▼</button></div><div class="abtns"><button data-k="z" aria-label="Z key">Z</button><button data-k="space" aria-label="Space key">␣</button></div></div><div id="runtimeOverlays"></div></div>
     </main>
     <aside class="dock right">
-      <div class="ph"><span>Inspector</span></div>
+      <div class="ph"><span>Inspector</span><span class="sp"></span><button class="ghost mobonly closeDrawer" aria-label="Close">✕</button></div>
       <div class="pb"><div class="insp" id="insp"></div></div>
     </aside>
   </div>
+
+  <nav id="mobnav" aria-label="Workspaces"></nav>
 
   <footer id="bottom">
     <div id="bottomBody"></div>
@@ -327,8 +539,9 @@ input[type=checkbox]{accent-color:var(--accent)}
   </footer>
 </div>
 
+<div id="scrim"></div>
 <div class="modal" id="mSettings"><div class="card" role="dialog" aria-label="Settings"><h2><span>Settings</span><button class="ghost" data-close>✕</button></h2><div class="cb" id="settingsBody"></div></div></div>
-<div class="modal" id="mLearn"><div class="card" role="dialog" aria-label="Learn Integral"><h2><span>Learn Integral</span><button class="ghost" data-close>✕</button></h2><div class="cb block" id="learnBody"></div></div></div>
+<div class="modal" id="mLearn"><div class="card docs-card" role="dialog" aria-label="g(x) documentation"><h2><span>g(x) documentation</span><button class="ghost" data-close aria-label="Close documentation">✕</button></h2><div id="learnBody" class="docs-layout"></div></div></div>
 <div class="modal" id="mExport"><div class="card" role="dialog" aria-label="Export"><h2><span>Export playable HTML</span><button class="ghost" data-close>✕</button></h2><div class="cb block" id="exportBody"></div></div></div>
 <div id="toast" role="status"></div>
 <input type="file" id="fileOpen" accept=".gxproj,.json,application/json" hidden>
@@ -475,6 +688,7 @@ const STATEMENTS = [
   T('point $ degrees', 'point'), T('point towards $', 'point_towards'),
   T('turn $ degrees', 'turn'), T('move $ steps', 'move'),
   T('tick physics', 'phys_tick'), T('enable physics for $', 'phys_on'), T('disable physics for $', 'phys_off'),
+  T('set physics body to fixed', 'phys_fixed'), T('set physics body to dynamic', 'phys_dynamic'),
   T('set mode to polygonal', 'phys_poly'), T('set mode to circular', 'phys_circ'),
   T('set density to $', 'phys_density'), T('set gravity to $', 'phys_gravity'),
   T('set velocity to $', 'phys_vel'), T('set rotation velocity to $', 'phys_rotvel'),
@@ -647,10 +861,21 @@ function parseBool(inner) {
 }
 
 function parseVec(v) {
-  const toks = tokenize(v.slice(6));
+  const raw = v.slice(6).trim();
+  const toks = tokenize(raw);
   if (toks[0] && toks[0].k === 'W' && toks[0].v.toLowerCase() === 'magnitude' &&
       toks[2] && toks[2].k === 'W' && toks[2].v.toLowerCase() === 'angle' && toks.length === 4) {
     return { t: 'rep', name: 'vecma', a: [fromToken(toks[1]), fromToken(toks[3])] };
+  }
+  // Parse coordinate components separately. Do not route the whole pair through
+  // parseGroup/looksTuple: reporters such as `y velocity` contain spaces and
+  // were mistaken for plain text, causing vector(0, y velocity) to evaluate as
+  // [0, 0] and silently erase vertical velocity on every controller frame.
+  if (raw.startsWith('(') && matchClose(raw, 0) === raw.length - 1) {
+    const parts = splitTop(raw.slice(1, -1), ',');
+    if (parts.length === 2 && parts.every(p => p.trim())) {
+      return { t: 'rep', name: 'vecxy', a: [{ t: 'tuple', items: parts.map(p => parseValue(p.trim())) }] };
+    }
   }
   if (toks.length === 1) return { t: 'rep', name: 'vecxy', a: [fromToken(toks[0])] };
   fail('Vector needs (x,y) or magnitude () angle ()');
@@ -1131,7 +1356,7 @@ function Runtime(project, opts) {
 
   // ---------- statements ----------
   function target(c, node) { return findEntity(c, ev(node, c)) || c.ent; }
-  function ensurePhys(e) { return e.phys || (e.phys = { on: false, mode: 'poly', density: 100, vx: 0, vy: 0, av: 0, fx: 0, fy: 0 }); }
+  function ensurePhys(e) { return e.phys || (e.phys = { on: false, fixed: false, mode: 'poly', density: 100, vx: 0, vy: 0, av: 0, fx: 0, fy: 0 }); }
   function texNamed(c, nm) {
     const e = c.ent; const i = e.texList.findIndex(t => t.name === nm);
     if (i >= 0) { e.texIndex = i; e.texOverride = null; return; }
@@ -1198,6 +1423,8 @@ function Runtime(project, opts) {
     move: (c, a) => { const e = c.ent; const d = N(a, 0, c); setAtt(e, 'x', e.x + d * Math.cos(e.rotation * D2R)); setAtt(e, 'y', e.y + d * Math.sin(e.rotation * D2R)); },
     phys_tick: () => { if (!autoPhysics) stepPhysics(1 / 60); },
     phys_on: (c, a) => { ensurePhys(target(c, a[0])).on = true; }, phys_off: (c, a) => { ensurePhys(target(c, a[0])).on = false; },
+    phys_fixed: (c) => { const p = ensurePhys(c.ent); p.on = true; p.fixed = true; p.vx = p.vy = p.av = p.fx = p.fy = 0; },
+    phys_dynamic: (c) => { const p = ensurePhys(c.ent); p.on = true; p.fixed = false; },
     phys_poly: (c) => { ensurePhys(c.ent).mode = 'poly'; }, phys_circ: (c) => { ensurePhys(c.ent).mode = 'circ'; },
     phys_density: (c, a) => { ensurePhys(c.ent).density = Math.max(0.01, N(a, 0, c)); },
     phys_gravity: (c, a) => { gravity = vecOf(E(a, 0, c)); },
@@ -1208,12 +1435,15 @@ function Runtime(project, opts) {
     stop_all: () => { threads.length = 0; }
   };
 
-  // ---------- physics (small, no rotation in collisions) ----------
+  // ---------- physics: dynamic and fixed bodies, axis-aligned collision resolution ----------
   function massOf(e) { const s = size(e); return Math.max(0.01, ensurePhys(e).density * s[0] * s[1] / 1000); }
   function stepPhysics(dt) {
     const bodies = entities.filter(e => e.alive && e.phys && e.phys.on);
+    // Integrate dynamic bodies only. Fixed bodies remain immobile and act as solid colliders.
     for (const e of bodies) {
-      const p = e.phys, m = massOf(e);
+      const p = e.phys;
+      if (p.fixed) { p.vx = p.vy = p.av = p.fx = p.fy = 0; continue; }
+      const m = massOf(e);
       p.vx += (gravity[0] + p.fx / m * 60) * dt; p.vy += (gravity[1] + p.fy / m * 60) * dt;
       if (wind) { p.vx += (wind[0] - p.vx) * 0.5 * dt; p.vy += (wind[1] - p.vy) * 0.5 * dt; }
       p.fx = p.fy = 0;
@@ -1222,17 +1452,26 @@ function Runtime(project, opts) {
       if (e.x > hx) { e.x = hx; p.vx *= -0.4; } if (e.x < -hx) { e.x = -hx; p.vx *= -0.4; }
       if (e.y > hy) { e.y = hy; p.vy *= -0.4; } if (e.y < -hy) { e.y = -hy; p.vy *= -0.4; }
     }
-    const lim = Math.min(bodies.length, 250);
+    const lim = Math.min(bodies.length, 500);
     for (let i = 0; i < lim; i++) for (let j = i + 1; j < lim; j++) {
-      const A = bodies[i], B = bodies[j];
-      if (!overlap(A, B)) continue;
-      const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 0.001;
-      const sa = size(A), sb = size(B); const pen = (sa[0] + sb[0]) / 4 + (sa[1] + sb[1]) / 4 - d;
-      const nx = dx / d, ny = dy / d, ma = massOf(A), mb = massOf(B), tot = ma + mb;
-      const push = Math.max(0, pen) * 0.5;
-      A.x -= nx * push * mb / tot; A.y -= ny * push * mb / tot; B.x += nx * push * ma / tot; B.y += ny * push * ma / tot;
-      const rv = (B.phys.vx - A.phys.vx) * nx + (B.phys.vy - A.phys.vy) * ny;
-      if (rv < 0) { const j2 = -(1.3) * rv / (1 / ma + 1 / mb); A.phys.vx -= j2 * nx / ma; A.phys.vy -= j2 * ny / ma; B.phys.vx += j2 * nx / mb; B.phys.vy += j2 * ny / mb; }
+      const A = bodies[i], B = bodies[j], pa = A.phys, pb = B.phys;
+      if (pa.fixed && pb.fixed) continue;
+      const sa = size(A), sb = size(B);
+      const ox = (sa[0] + sb[0]) / 2 - Math.abs(B.x - A.x);
+      const oy = (sa[1] + sb[1]) / 2 - Math.abs(B.y - A.y);
+      if (ox <= 0 || oy <= 0) continue;
+      // Resolve along the shallowest penetration axis to prevent bodies sinking into platforms.
+      if (ox < oy) {
+        const dir = B.x >= A.x ? 1 : -1;
+        if (pa.fixed) { B.x += dir * ox; if (pb.vx * dir < 0) pb.vx = 0; }
+        else if (pb.fixed) { A.x -= dir * ox; if (pa.vx * dir > 0) pa.vx = 0; }
+        else { A.x -= dir * ox / 2; B.x += dir * ox / 2; const av=pa.vx; pa.vx=pb.vx; pb.vx=av; }
+      } else {
+        const dir = B.y >= A.y ? 1 : -1;
+        if (pa.fixed) { B.y += dir * oy; if (pb.vy * dir < 0) pb.vy = 0; }
+        else if (pb.fixed) { A.y -= dir * oy; if (pa.vy * dir > 0) pa.vy = 0; }
+        else { A.y -= dir * oy / 2; B.y += dir * oy / 2; const av=pa.vy; pa.vy=pb.vy; pb.vy=av; }
+      }
     }
   }
 
@@ -1431,7 +1670,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = Runtime;
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
-<script id="app">
+<script id="gx-app-src">
 /* g(x) editor, part 1: state, storage, objects, inspector, viewport */
 'use strict';
 const $ = (s, r) => (r || document).querySelector(s);
@@ -1507,7 +1746,7 @@ let dirty = false, lastSaved = null;
 const objById = (id) => project.objects.find(o => o.id === id);
 const sel = () => objById(selId);
 const children = (pid) => project.objects.filter(o => o.parent === pid && o.type !== 'global');
-const settings = Object.assign({ mode: 'system', accent: '#478cbf', uiSize: 13, grid: true, snap: 1, codeSize: 13, themeColors: {} }, lsGet('gx-settings', {}));
+const settings = Object.assign({ touch: 'auto', mode: 'system', accent: '#478cbf', uiSize: 13, grid: true, snap: 1, codeSize: 13, themeColors: {} }, lsGet('gx-settings', {}));
 
 /* ---------- undo ---------- */
 const undoStack = [], redoStack = [];
@@ -1523,7 +1762,7 @@ function redo() { if (!redoStack.length) return; const s = redoStack.pop(); undo
 function afterRestore() { if (!sel()) selId = project.objects[1] ? project.objects[1].id : 'global'; markDirty(); refreshAll(); }
 
 function markDirty() { dirty = true; setStatus(); scheduleSession(); }
-function setStatus() { $('#status').textContent = project.name + (dirty ? ' •unsaved' : '') + (lastSaved ? ' · saved ' + lastSaved.toLocaleTimeString() : ''); document.title = 'g(x) – ' + project.name + (dirty ? '*' : ''); }
+function setStatus() { $('#status').textContent = project.name + (dirty ? ' •unsaved' : '') + (lastSaved ? '  /  saved ' + lastSaved.toLocaleTimeString() : ''); document.title = 'g(x) – ' + project.name + (dirty ? '*' : ''); }
 function toast(msg, action, label) {
   const t = $('#toast'); t.textContent = msg;
   if (action) { const b = document.createElement('button'); b.textContent = label || 'Undo'; b.onclick = () => { action(); t.classList.remove('on'); }; t.appendChild(b); }
@@ -1781,7 +2020,7 @@ function drawVp() {
     for (const [hx, hy] of handlePts(s)) c.fillRect(hx * cam.zoom - 4, -hy * cam.zoom - 4, 8, 8);
     c.restore();
   }
-  $('#vpInfo').textContent = Math.round(cam.zoom * 100) + '%  ·  ' + (s && s.type !== 'global' ? s.name + ' (' + Math.round(s.x) + ', ' + Math.round(s.y) + ')' : 'no selection');
+  $('#vpInfo').textContent = Math.round(cam.zoom * 100) + '%   /   ' + (s && s.type !== 'global' ? s.name + ' (' + Math.round(s.x) + ', ' + Math.round(s.y) + ')' : 'no selection');
 }
 function project3D(x,y,z,W,H){ x-=(cam3D.targetX||0); y-=(cam3D.targetY||0); z-=(cam3D.targetZ||0);
   const cy=Math.cos(cam3D.yaw), sy=Math.sin(cam3D.yaw), cp=Math.cos(cam3D.pitch), sp=Math.sin(cam3D.pitch);
@@ -1824,7 +2063,7 @@ function draw3D(){
       const rx=(o.rotationX||0)*Math.PI/180, ry=(o.rotationY||0)*Math.PI/180, rz=(o.rotation||0)*Math.PI/180; const projected=verts.map(v=>{let [x,y,z]=v;let yy=y*Math.cos(rx)-z*Math.sin(rx), zz=y*Math.sin(rx)+z*Math.cos(rx);y=yy;z=zz;let xx=x*Math.cos(ry)+z*Math.sin(ry);zz=-x*Math.sin(ry)+z*Math.cos(ry);x=xx;z=zz;xx=x*Math.cos(rz)-y*Math.sin(rz);yy=x*Math.sin(rz)+y*Math.cos(rz);return project3D(o.x+xx,o.y+yy,o.z+z,W,H);});
       const ordered=faces.map(f=>({f,depth:f.reduce((a,i)=>a+projected[i][2],0)/f.length})).sort((a,b)=>b.depth-a.depth);
       for(const {f} of ordered){c.beginPath();f.forEach((i,k)=>{const q=projected[i];if(k===0)c.moveTo(q[0],q[1]);else c.lineTo(q[0],q[1]);});c.closePath();c.globalAlpha=f.length===4?.72:.82;c.fill();c.globalAlpha=1;c.stroke();}
-      if(o.id===selId){c.fillStyle=cssVar('--fg');c.font='12px sans-serif';c.fillText(`${o.name} · ${g}`,sx+w*sc+8,sy-h*sc);}
+      if(o.id===selId){c.fillStyle=cssVar('--fg');c.font='12px sans-serif';c.fillText(`${o.name}  /  ${g}`,sx+w*sc+8,sy-h*sc);}
     }else{
       const [w,h]=objSize(o),ww=Math.max(4,w*sc),hh=Math.max(4,h*sc);c.translate(sx,sy);c.rotate(-o.rotation*Math.PI/180);
       if(o.type==='circle'){c.beginPath();c.ellipse(0,0,Math.max(3,o.cRadius*sc),Math.max(3,o.cRadius*sc*.72),0,0,Math.PI*2);c.fill();c.stroke();}else{c.fillRect(-ww/2,-hh/2,ww,hh);c.strokeRect(-ww/2,-hh/2,ww,hh);}
@@ -1832,9 +2071,9 @@ function draw3D(){
       if(o.id===selId){c.fillStyle=cssVar('--fg');c.font='12px sans-serif';c.fillText(`${o.name}  (${Math.round(o.x)}, ${Math.round(o.y)}, ${Math.round(o.z)})`,sx+ww/2+8,sy-hh/2);}
     }c.restore();
   }
-  $('#vpInfo').textContent='3D · zoom '+Math.round(cam3D.zoom*100)+'% · drag object to move · Shift-drag for Z · drag empty space to orbit';
+  $('#vpInfo').textContent='3D  /  zoom '+Math.round(cam3D.zoom*100)+'%  /  drag object to move  /  Shift-drag for Z  /  drag empty space to orbit';
 }
-$('#btn3D').onclick=()=>{view3D=!view3D;$('#shape3DTools').style.display=view3D?'inline-flex':'none';$('#btn3D').setAttribute('aria-selected',String(view3D));$('#vp').setAttribute('aria-label',view3D?'3D scene viewport':'Scene viewport');$('.vphint').textContent=view3D?'Drag objects to move · Shift-drag changes Z · drag empty space to orbit · wheel zooms':'Drag to move · wheel to zoom · Space or right-drag to pan · arrows nudge · Shift = 10px';drawVp();};
+$('#btn3D').onclick=()=>{view3D=!view3D;$('#shape3DTools').style.display=view3D?'inline-flex':'none';$('#btn3D').setAttribute('aria-selected',String(view3D));$('#vp').setAttribute('aria-label',view3D?'3D scene viewport':'Scene viewport');$('.vphint').textContent=view3D?'Drag objects to move  /  Shift-drag changes Z  /  drag empty space to orbit  /  wheel zooms':'Drag to move  /  wheel to zoom  /  Space or right-drag to pan  /  arrows nudge  /  Shift = 10px';drawVp();};
 document.querySelectorAll('[data-3dshape]').forEach(b=>b.addEventListener('click',()=>add3DObject(b.dataset['3dshape'])));
 
 function handlePts(o) { if (o.type === 'circle') return [[o.cRadius, 0]]; const [w, h] = objSize(o); return [[w / 2, h / 2], [-w / 2, h / 2], [w / 2, -h / 2], [-w / 2, -h / 2]]; }
@@ -1912,7 +2151,7 @@ function refreshAll(keepScript) { renderTree(); renderInspector(); renderAssets(
 /* g(x) editor, part 2: workspaces, scripts, textures, play, files, backups, export, settings */
 let wsCur = 'vp', scriptIdx = 0;
 function setWs(name) {
-  wsCur = name;
+  wsCur = name; if (window.closeDrawers) { closeDrawers(); document.body.classList.remove('blocks-open'); }
   $$('.ws').forEach(w => w.classList.toggle('on', w.id === name + 'Ws'));
   $$('.tabs [data-ws]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ws === name)));
   if (name === 'vp') resizeVp();
@@ -1961,7 +2200,7 @@ const PALETTE = [
   ['Lists', ['new list [1,2,3], ID (nums)', '(item (1) in (nums))', 'add (4) to list (nums)', '(average of list (nums))']],
   ['Casso', ['brush down', 'brush up', 'wash canvas', 'set paint color to (255,0,0)', 'set brush size to (3)', 'paint myself at (0,0)']],
   ['Vectors', ['point (90) degrees', 'point towards ((cursor x),(cursor y))', 'turn (5) degrees', '(direction)', '(x of /vector magnitude (5) angle (90)/)']],
-  ['Physics', ['enable physics for (this-object)', 'set gravity to (0,-300)', 'set velocity to (0,100)', 'push with force (3) at angle (direction)', 'set density to 500']]
+  ['Physics', ['enable physics for (this-object)', 'set physics body to fixed', 'set physics body to dynamic', 'set gravity to (0,-300)', 'set velocity to (0,100)', 'push with force (3) at angle (direction)', 'set density to 500']]
 ];
 $('#palette').innerHTML = PALETTE.map(([t, items], i) => '<details' + (i < 2 ? ' open' : '') + '><summary>' + t + '</summary>' + items.map((s, j) => '<button class="snip" data-g="' + i + '" data-i="' + j + '" title="Insert at cursor">' + esc(s.split('\n')[0]) + '</button>').join('') + '</details>').join('');
 $('#palette').addEventListener('click', (e) => {
@@ -1969,9 +2208,114 @@ $('#palette').addEventListener('click', (e) => {
   const s = PALETTE[+b.dataset.g][1][+b.dataset.i];
   const lineStart = ta.value.lastIndexOf('\n', ta.selectionStart - 1) + 1; const indent = /^\s*/.exec(ta.value.slice(lineStart))[0];
   const text = s.split('\n').map((l, i) => i ? indent + l : l).join('\n');
-  ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end'); ta.focus(); codeInput();
+  ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end'); codeInput(); if (mqSmall.matches) document.body.classList.remove('blocks-open'); ta.focus();
 });
 let diagTimer = 0;
+let scriptView = 'text';
+function blockCategory(line) {
+  const t=line.trim().toLowerCase();
+  if (/^(on\s|when\s|every\s|key\s)/.test(t)) return 'event';
+  if (/^(if\b|else\b|repeat\b|indef\b|forever\b|while\b|switch\b|case\b|default\b|end\b|wait\b|stop\b)/.test(t)) return 'control';
+  if (/^(set\s|change\s|edit\s|make\s|new\s|add\s|delete\s|clear\s|replace\s)/.test(t)) return 'data';
+  if (/^(move\b|turn\b|point\b|push\b|set velocity|set gravity|set physics body|enable physics|disable physics)/.test(t)) return 'motion';
+  if (/^(show\b|disappear\b|set texture|cycle next texture|cycle previous texture|stretch texture)/.test(t)) return 'looks';
+  if (/^(play sound|stop sound|stop all sounds|set volume)/.test(t)) return 'sound';
+  if (/[=<>]|\b(and|or|not|touching|pressed|down|hit)\b/.test(t)) return 'logic';
+  return 'custom';
+}
+function renderBlocks() {
+  const host=$('#blockWorkspace'), ta=$('#code');
+  if (!host) return;
+  const lines=ta.value.split('\n');
+  // Preserve source lines exactly. Indentation forms visual nesting; dragging a
+  // line moves its entire indented subtree, not just the visible row.
+  const rows=lines.map((text,i)=>({text,i,indent:(/^\s*/.exec(text)||[''])[0].length}));
+  const roots=[]; const stack=[];
+  for(const row of rows){
+    while(stack.length && row.indent<=stack[stack.length-1].indent) stack.pop();
+    const node={...row,children:[]};
+    if(stack.length) stack[stack.length-1].children.push(node); else roots.push(node);
+    stack.push(node);
+  }
+  const renderNode=(node)=>{
+    const cat=blockCategory(node.text);
+    const nested=node.children.length>0;
+    const own='<div class="code-block '+cat+'" draggable="true" data-line="'+node.i+'" style="--depth:'+Math.min(node.indent,24)+'"><div class="block-line"><span class="block-grip" aria-label="Drag block" title="Drag to reorder">⠿</span><input aria-label="Code block '+(node.i+1)+'" data-block-line="'+node.i+'" value="'+esc(node.text.trim())+'" placeholder="Add Integral instruction" spellcheck="false"><button class="ghost" data-remove-block="'+node.i+'" aria-label="Remove block" title="Remove block">×</button></div>';
+    return own+(nested?'<div class="block-children">'+node.children.map(renderNode).join('')+'</div>':'')+'</div>';
+  };
+  host.innerHTML='<div class="block-stack">'+roots.map(renderNode).join('')+'</div>';
+}
+function setScriptView(view) {
+  scriptView=view;
+  $('#textEditor').hidden=view!=='text';
+  $('#blockEditor').hidden=view!=='blocks';
+  $('#blockEditor').style.display=view==='blocks'?'flex':'none';
+  $('#btnBlocks').textContent=view==='blocks'?'Code':'Blocks';
+  $('#btnBlocks').setAttribute('aria-pressed',String(view==='blocks'));
+  if(view==='blocks') renderBlocks();
+}
+$('#btnBlocks').addEventListener('click',()=>setScriptView(scriptView==='text'?'blocks':'text'));
+$('#blockWorkspace').addEventListener('input',e=>{
+  const input=e.target.closest('[data-block-line]'); if(!input)return;
+  const ta=$('#code'), lines=ta.value.split('\n'), i=+input.dataset.blockLine;
+  const old=lines[i]||'', indent=(/^\s*/.exec(old)||[''])[0];
+  lines[i]=indent+input.value; ta.value=lines.join('\n');
+  const cursor=input.selectionStart; renderBlocks(); const next=$('#blockWorkspace [data-block-line="'+i+'"]'); if(next){next.focus();next.setSelectionRange(cursor,cursor)}
+  codeInput();
+});
+$('#blockWorkspace').addEventListener('click',e=>{
+  const rm=e.target.closest('[data-remove-block]'); if(!rm)return;
+  const ta=$('#code'), lines=ta.value.split('\n'); lines.splice(+rm.dataset.removeBlock,1); ta.value=lines.join('\n'); codeInput(); renderBlocks();
+});
+let draggedBlockLine=null;
+$('#blockWorkspace').addEventListener('dragstart',e=>{
+  const block=e.target.closest('.code-block[draggable="true"]');
+  if(!block || e.target.closest('input,button')) { e.preventDefault(); return; }
+  draggedBlockLine=+block.dataset.line;
+  e.dataTransfer.effectAllowed='move';
+  try{e.dataTransfer.setData('text/plain',String(draggedBlockLine));}catch(_){ }
+  block.classList.add('dragging');
+});
+$('#blockWorkspace').addEventListener('dragend',e=>{
+  const b=e.target.closest('.code-block'); if(b)b.classList.remove('dragging');
+  $$('.code-block.drop-target','#blockWorkspace').forEach(x=>x.classList.remove('drop-target'));
+  draggedBlockLine=null;
+});
+$('#blockWorkspace').addEventListener('dragover',e=>{
+  const target=e.target.closest('.code-block[draggable="true"]'); if(!target || draggedBlockLine===null)return;
+  e.preventDefault(); e.dataTransfer.dropEffect='move';
+  $$('.code-block.drop-target','#blockWorkspace').forEach(x=>x.classList.remove('drop-target'));
+  target.classList.add('drop-target');
+});
+$('#blockWorkspace').addEventListener('drop',e=>{
+  const target=e.target.closest('.code-block[draggable="true"]');
+  if(!target || draggedBlockLine===null)return;
+  e.preventDefault(); const from=draggedBlockLine,to=+target.dataset.line;
+  if(from===to)return;
+  const ta=$('#code'), lines=ta.value.split('\n');
+  const indentOf=i=>(/^\s*/.exec(lines[i]||'')||[''])[0].length;
+  let end=from+1; while(end<lines.length && indentOf(end)>indentOf(from))end++;
+  const moving=lines.splice(from,end-from); let adjusted=to;
+  if(to>from) adjusted-=moving.length;
+  const targetIndent=indentOf(Math.min(adjusted,lines.length-1));
+  const normalized=moving.map(line=>line);
+  // Keep the moved group intact and align its root with the drop target.
+  const firstIndent=(/^\s*/.exec(moving[0]||'')||[''])[0].length;
+  for(let j=0;j<normalized.length;j++){
+    const originalIndent=(/^\s*/.exec(normalized[j])||[''])[0].length;
+    const nextIndent=Math.max(0,originalIndent-firstIndent+Math.max(0,targetIndent));
+    normalized[j]=' '.repeat(nextIndent)+normalized[j].trimStart();
+  }
+  lines.splice(Math.max(0,Math.min(adjusted,lines.length)),0,...normalized);
+  ta.value=lines.join('\n'); codeInput(); renderBlocks();
+});
+$('#addBlock').addEventListener('click',()=>{
+  const ta=$('#code'), type=$('#blockType').value;
+  const examples={event:'on start',motion:'move 10 steps',looks:'show',control:'repeat 10\n  move 10 steps\nend',logic:'if 1 = 1\n  print(hello)\nend',data:'set att.x to 0',sound:'play sound beep',custom:'print(hello)'};
+  const snippet=examples[type]||'print(hello)';
+  ta.value+=(ta.value&&!ta.value.endsWith('\n')?'\n':'')+snippet+'\n'; codeInput(); renderBlocks();
+  const inputs=$$('#blockWorkspace [data-block-line]'); if(inputs.length) inputs[inputs.length-snippet.split('\n').length].focus();
+});
 function scriptRender() {
   const o = sel(); const list = $('#scriptList'); const ta = $('#code');
   if (!o) return;
@@ -1983,7 +2327,7 @@ function scriptRender() {
   $('#scriptName').value = s ? s.name : '';
   ta.value = s ? s.code : '';
   if (!s) ta.placeholder = 'Click “+ New” to attach a script to ' + o.name + '.';
-  paintCode();
+  paintCode(); if (scriptView === 'blocks') renderBlocks();
 }
 function paintCode() {
   const ta = $('#code'); $('#hl').innerHTML = highlight(ta.value);
@@ -2001,7 +2345,7 @@ function runDiag() {
 }
 function codeInput() {
   const o = sel(); const s = o && o.scripts[scriptIdx]; if (!s) return;
-  s.code = $('#code').value; commit(true); paintCode(); clearTimeout(diagTimer); diagTimer = setTimeout(runDiag, 250);
+  s.code = $('#code').value; commit(true); paintCode(); if (scriptView === 'blocks') renderBlocks(); clearTimeout(diagTimer); diagTimer = setTimeout(runDiag, 250);
 }
 function syncScroll() { const ta = $('#code'); $('#hl').scrollTop = ta.scrollTop; $('#hl').scrollLeft = ta.scrollLeft; $('#gutter').scrollTop = ta.scrollTop; }
 $('#code').addEventListener('input', codeInput);
@@ -2032,13 +2376,15 @@ $('#swatches').innerHTML = PAL.map(c => '<button style="background:' + c + '" da
 $('#swatches').addEventListener('click', (e) => { const b = e.target.closest('[data-c]'); if (b) $('#texColor').value = b.dataset.c; });
 function texSize() { return +$('#texSize').value; }
 function texSync() {
-  const z = +$('#texZoom').value; const n = tc.width; tc.style.width = n * z + 'px'; tc.style.height = n * z + 'px';
+  const zv = $('#texZoom').value; const st = $('.texstage'); const avail = Math.min(st.clientWidth, st.clientHeight) - 24;
+  const z = zv === 'fit' ? (avail > 0 ? Math.max(1, Math.floor(avail / tc.width)) : 8) : +zv; const n = tc.width; tc.style.width = n * z + 'px'; tc.style.height = n * z + 'px';
   tc.style.backgroundImage = texGrid ? 'linear-gradient(to right, rgba(128,128,128,.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(128,128,128,.35) 1px, transparent 1px), repeating-conic-gradient(var(--bg3) 0 25%, transparent 0 50%)' : '';
   tc.style.backgroundSize = texGrid ? z + 'px ' + z + 'px, ' + z + 'px ' + z + 'px, 16px 16px' : '';
   $('#texSave').textContent = texEditing ? 'Update texture' : 'Save as texture';
 }
 function texInit(n) { tc.width = n; tc.height = n; tctx.clearRect(0, 0, n, n); texUndo = []; texRedo = []; texSync(); }
 texInit(64);
+new ResizeObserver(() => texSync()).observe($('.texstage'));
 function texPush() { texUndo.push(tctx.getImageData(0, 0, tc.width, tc.height)); if (texUndo.length > 40) texUndo.shift(); texRedo = []; }
 $('#texUndo').onclick = () => { if(texMode==='vector'){vecUndoDo();return;} if (!texUndo.length) return; texRedo.push(tctx.getImageData(0, 0, tc.width, tc.height)); tctx.putImageData(texUndo.pop(), 0, 0); };
 $('#texRedo').onclick = () => { if(texMode==='vector'){vecRedoDo();return;} if (!texRedo.length) return; texUndo.push(tctx.getImageData(0, 0, tc.width, tc.height)); tctx.putImageData(texRedo.pop(), 0, 0); };
@@ -2174,8 +2520,8 @@ function syncRuntimeOverlays(){
   if(!rt || !playing) return;
   const d=rt.monitorData();
   const wanted=[];
-  Object.entries(d.globals||{}).forEach(([k,v])=>wanted.push(['var:'+k,'Variable · '+k,String(v)]));
-  Object.entries(d.lists||{}).forEach(([k,v])=>wanted.push(['list:'+k,'List · '+k,(v||[]).map((x,i)=>(i+1)+'. '+String(x)).join('\n')||'(empty)']));
+  Object.entries(d.globals||{}).forEach(([k,v])=>wanted.push(['var:'+k,'Variable  /  '+k,String(v)]));
+  Object.entries(d.lists||{}).forEach(([k,v])=>wanted.push(['list:'+k,'List  /  '+k,(v||[]).map((x,i)=>(i+1)+'. '+String(x)).join('\n')||'(empty)']));
   for(const [id,title,value] of wanted){let el=monitorEls.get(id);if(!el){el=document.createElement('section');el.className='gx-monitor';el.style.left=(12+(monitorEls.size%3)*230)+'px';el.style.top=(12+Math.floor(monitorEls.size/3)*118)+'px';el.innerHTML='<header><span></span><button type="button" title="Hide monitor" aria-label="Hide monitor">×</button></header><pre></pre>';el.querySelector('header span').textContent=title;const close=el.querySelector('button');close.addEventListener('pointerdown',e=>{e.stopPropagation();});close.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();el.remove();monitorEls.delete(id);});const h=el.querySelector('header');h.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;if(e.button!==0)return;e.preventDefault();const r=el.getBoundingClientRect(),base=runtimeOverlays.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;el.style.zIndex=String(10+Date.now()%100000);const move=q=>{el.style.left=Math.max(0,q.clientX-base.left-ox)+'px';el.style.top=Math.max(0,q.clientY-base.top-oy)+'px';};const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up,{once:true});});runtimeOverlays.appendChild(el);monitorEls.set(id,el);}el.querySelector('header span').textContent=title;el.querySelector('pre').textContent=value;}
   const req=rt.pendingInput(); if(req && inputRequest!==req){inputRequest=req;const shade=document.createElement('div');shade.className='gx-input-shade';shade.innerHTML='<form class="gx-input-card"><label></label><input autocomplete="off"><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="primary" type="submit">OK</button></div></form>';shade.querySelector('label').textContent=req.prompt;const form=shade.querySelector('form'),inp=shade.querySelector('input');form.onsubmit=e=>{e.preventDefault();req.value=inp.value;req.done=true;shade.remove();inputRequest=null;};runtimeOverlays.appendChild(shade);inp.focus();}
   if(!rt.pendingInput()&&inputRequest){inputRequest=null;}
@@ -2195,7 +2541,7 @@ async function play() {
   rt = new GX.Runtime(snapProj, { print: (m, l) => log(m, l) });
   try { rt.compileAll(); await rt.load(); rt.start(); } catch (e) { log('Could not start: ' + e.message, 'error'); return; }
   playing = true; $('#btnPlay').disabled = true; $('#btnStop').disabled = false; setWs('game'); fitGame();
-  $('#gameBar').textContent = 'Running · click the game to focus · F8 to stop'; gcv.tabIndex = 0; gcv.focus();
+  $('#gameBar').textContent = 'Running  /  click the game to focus  /  F8 to stop'; gcv.tabIndex = 0; gcv.focus();
   lastT = performance.now(); acc = 0;
   const loop = (t) => { if (!playing) return; acc += Math.min(0.1, (t - lastT) / 1000); lastT = t; let n = 0; while (acc >= 1 / 60 && n++ < 5) { rt.step(1 / 60); acc -= 1 / 60; } rt.render(gctx); syncRuntimeOverlays(); raf = requestAnimationFrame(loop); };
   raf = requestAnimationFrame(loop);
@@ -2272,7 +2618,7 @@ async function renderBackups() {
   const b = $('#bottomBody'); const keys = (await Store.keys('bak:')).sort().reverse(); const rows = [];
   for (const k of keys) { const v = await Store.get(k); if (v) rows.push(v); }
   b.innerHTML = '<div style="font-family:var(--sans);margin-bottom:6px"><button id="bkNow">Back up now</button> <span class="muted small">Your work is also saved continuously as a session, and auto-backed-up every 2 minutes (last 15 kept). Stored in this browser only: use “Save to computer” for a real copy.</span></div>' +
-    (rows.length ? rows.map(v => '<div class="bak"><span>' + new Date(v.t).toLocaleString() + '</span><span class="muted">' + esc(v.kind) + ' · ' + esc(v.name) + ' · ' + Math.round(v.size / 1024) + ' KB</span><span class="sp"></span><button data-bk-restore="' + v.t + '">Restore</button><button data-bk-dl="' + v.t + '">Download</button><button data-bk-del="' + v.t + '">Delete</button></div>').join('') : '<div class="muted">No backups yet.</div>');
+    (rows.length ? rows.map(v => '<div class="bak"><span>' + new Date(v.t).toLocaleString() + '</span><span class="muted">' + esc(v.kind) + '  /  ' + esc(v.name) + '  /  ' + Math.round(v.size / 1024) + ' KB</span><span class="sp"></span><button data-bk-restore="' + v.t + '">Restore</button><button data-bk-dl="' + v.t + '">Download</button><button data-bk-del="' + v.t + '">Delete</button></div>').join('') : '<div class="muted">No backups yet.</div>');
 }
 $('#bottomBody').addEventListener('click', async (e) => {
   const t = e.target; if (t.id === 'bkNow') { await makeBackup('manual'); return; }
@@ -2287,17 +2633,19 @@ $$('[data-btab]').forEach(b => b.onclick = () => {
 });
 
 /* ---------- export ---------- */
+const TP_CSS = '#tp{position:fixed;left:0;right:0;bottom:max(12px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 16px;pointer-events:none}#tp button{pointer-events:auto;touch-action:none;width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3);font:20px system-ui;padding:0;-webkit-user-select:none;user-select:none}#tp button.d{background:#478cbf}.dp{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,58px);gap:4px}.dp [data-k="up arrow"]{grid-column:2;grid-row:1}.dp [data-k="left arrow"]{grid-column:1;grid-row:2}.dp [data-k="right arrow"]{grid-column:3;grid-row:2}.dp [data-k="down arrow"]{grid-column:2;grid-row:3}.ab{display:flex;gap:12px}body{touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:none}';
+const TP_JS = 'if(matchMedia("(pointer: coarse)").matches){var tp=document.createElement("div");tp.id="tp";tp.innerHTML=\'<div class="dp"><button data-k="up arrow">\\u25B2</button><button data-k="left arrow">\\u25C0</button><button data-k="right arrow">\\u25B6</button><button data-k="down arrow">\\u25BC</button></div><div class="ab"><button data-k="z">Z</button><button data-k="space">\\u2423</button></div>\';document.body.appendChild(tp);[].forEach.call(tp.querySelectorAll("button"),function(b){var k=b.getAttribute("data-k");function dn(e){e.preventDefault();b.className="d";rt.key(k,true)}function up(e){e.preventDefault();b.className="";rt.key(k,false)}b.addEventListener("pointerdown",dn);b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);b.addEventListener("pointerleave",up)})}';
 function buildExport() {
   const data = JSON.stringify({ settings: project.settings, assets: project.assets, objects: project.objects, animations: project.animations || [] }).replace(/</g, '\\u003c');
   const lang = $('#src-lang').textContent, run = $('#src-runtime').textContent; const S = '<' + '/script>';
-  return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(project.name) + '</title>' +
-    '<style>html,body{height:100%;margin:0;background:#0b0c0e;overflow:hidden}body{display:flex;align-items:center;justify-content:center}canvas{image-rendering:pixelated;background:#000}#go{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#dfe3ea;font:600 20px system-ui;background:#0b0c0ecc;cursor:pointer}</style></head><body><canvas id="c"></canvas><div id="go">Click to play</div>\n' +
+  return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>' + esc(project.name) + '</title>' +
+    '<style>html,body{height:100%;margin:0;background:#0b0c0e;overflow:hidden}body{display:flex;align-items:center;justify-content:center}canvas{image-rendering:pixelated;background:#000}#go{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#dfe3ea;font:600 20px system-ui;background:#0b0c0ecc;cursor:pointer}' + TP_CSS + '</style></head><body><canvas id="c"></canvas><div id="go">Click to play</div>\n' +
     '<script type="application/json" id="gx-data">' + data + S + '\n<script>' + lang + S + '\n<script>' + run + S + '\n' +
     '<script>(async function(){var P=JSON.parse(document.getElementById("gx-data").textContent),cv=document.getElementById("c"),W=P.settings.stageW,H=P.settings.stageH;cv.width=W;cv.height=H;var cx=cv.getContext("2d");' +
     'function fit(){var s=Math.min(innerWidth/W,innerHeight/H);cv.style.width=Math.floor(W*s)+"px";cv.style.height=Math.floor(H*s)+"px"}fit();addEventListener("resize",fit);' +
     'var rt=new GX.Runtime(P,{print:function(m,l){(l==="error"?console.error:console.log)(m)}});rt.compileAll();await rt.load();' +
     'function pt(e){var r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*W-W/2,H/2-(e.clientY-r.top)/r.height*H]}' +
-    'document.getElementById("go").onclick=function(){this.remove();rt.start();var last=performance.now(),acc=0;' +
+    'document.getElementById("go").onclick=function(){this.remove();rt.start();var last=performance.now(),acc=0;' + TP_JS + '' +
     'addEventListener("keydown",function(e){rt.key(e.key,true);if(e.key.indexOf("Arrow")===0||e.key===" ")e.preventDefault()});addEventListener("keyup",function(e){rt.key(e.key,false)});' +
     'cv.addEventListener("pointermove",function(e){var p=pt(e);rt.pointer(p[0],p[1])});cv.addEventListener("pointerdown",function(e){var p=pt(e);rt.pointer(p[0],p[1],true,true)});cv.addEventListener("pointerup",function(e){var p=pt(e);rt.pointer(p[0],p[1],false)});' +
     '(function loop(t){acc+=Math.min(.1,(t-last)/1000);last=t;var n=0;while(acc>=1/60&&n++<5){rt.step(1/60);acc-=1/60}rt.render(cx);requestAnimationFrame(loop)})(last)}})()' + S + '\n</body></html>';
@@ -2305,7 +2653,7 @@ function buildExport() {
 function openExport() {
   const html = buildExport(); const kb = Math.round(html.length / 1024);
   $('#exportBody').innerHTML = '<p>This builds one self-contained <code>.html</code> file with the g(x) runtime, your objects, textures, sounds and scripts inside. Open it in any browser, host it on itch.io or any static site, or wrap it in a desktop or mobile shell later.</p>' +
-    '<p>Size: <b>' + kb.toLocaleString() + ' KB</b> · Stage: ' + project.settings.stageW + '×' + project.settings.stageH + ' · ' + (project.objects.length - 1) + ' objects</p>' +
+    '<p>Size: <b>' + kb.toLocaleString() + ' KB</b>  /  Stage: ' + project.settings.stageW + '×' + project.settings.stageH + '  /  ' + (project.objects.length - 1) + ' objects</p>' +
     '<p style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="exDl">Download ' + esc(fileName()) + '.html</button><button id="exCopy">Copy HTML</button><button id="exDesktop">Download Windows .exe build package (.zip)</button></p><p class="small muted">Packages this game (not the editor) as a Windows desktop app. Extract the ZIP on Windows, install Node.js LTS, then run <code>npm install</code> and <code>npm run dist:win</code>. The generated installer and portable .exe will be in <code>dist</code>.</p>';
   $('#exDl').onclick = () => { downloadFile(fileName() + '.html', html, 'text/html'); toast('Exported ' + fileName() + '.html'); };
   $('#exCopy').onclick = () => { navigator.clipboard.writeText(html).then(() => toast('HTML copied'), () => toast('Copy was blocked. Use Download instead.')); };
@@ -2346,7 +2694,7 @@ function applyTheme() {
   const hex = settings.accent; r.style.setProperty('--accent', hex); Object.entries(settings.themeColors||{}).forEach(([k,v])=>r.style.setProperty(k,v));
   const [R, G, B] = hex2rgb(hex); const lum = (0.299 * R + 0.587 * G + 0.114 * B) / 255; r.style.setProperty('--accent-fg', lum > .6 ? '#111' : '#fff');
   r.style.setProperty('--ui', settings.uiSize + 'px'); $('#code').style.fontSize = $('#hl').style.fontSize = settings.codeSize + 'px';
-  drawVp();
+  applyTouch(); drawVp();
 }
 const ACCENTS = ['#478cbf', '#e0556a', '#f2a65a', '#6ecb8b', '#8e6bd9', '#26a69a', '#e84393', '#d4b400'];
 function openSettings() {
@@ -2356,6 +2704,7 @@ function openSettings() {
     '<label>Accent color</label><div><div class="sw">' + ACCENTS.map(c => '<button style="background:' + c + '" data-accent="' + c + '" aria-label="Accent ' + c + '"></button>').join('') + '<input type="color" id="sAccent" value="' + settings.accent + '" aria-label="Custom accent"></div></div>' + '<details style="margin:8px 0"><summary>All interface colors</summary><div class="two" style="grid-template-columns:1fr 1fr">' + [['--bg0','Main background','#e3e6eb'],['--bg1','Panels','#f0f2f5'],['--bg2','Headers','#e5e8ed'],['--bg3','Hover / raised','#d6dae2'],['--line','Borders','#c3c9d3'],['--fg','Main text','#1c2128'],['--fg2','Secondary text','#566070'],['--fg3','Muted text','#808a99'],['--view','Viewport background','#cfd4dc'],['--ok','Success color','#2e9e5b'],['--warn','Warning color','#b7791f'],['--err','Error color','#d14343'],['--c-kw','Code keywords','#8a4bbf'],['--c-ev','Code events','#c0392b'],['--c-att','Code attributes','#1d7f9b'],['--c-num','Code numbers','#b7611f'],['--c-cm','Code comments','#8a94a3'],['--c-br','Code brackets','#7a8594']].map(([k,n,d])=>'<label class="small">'+n+'<input type="color" data-theme-color="'+k+'" value="'+(settings.themeColors[k]||d)+'" style="display:block;width:100%"></label>').join('')+'</div></details>' +
     '<label for="sUi">Interface size</label><input type="range" id="sUi" min="11" max="17" value="' + settings.uiSize + '">' +
     '<label for="sCode">Code size</label><input type="range" id="sCode" min="11" max="20" value="' + settings.codeSize + '">' +
+    '<label for="sTouch">Touch controls</label><select id="sTouch">' + [['auto', 'Automatic'], ['on', 'Always show'], ['off', 'Hide']].map(([v, l]) => '<option value="' + v + '"' + (settings.touch === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
     '<label for="sGrid">Viewport grid</label><input type="checkbox" id="sGrid"' + (settings.grid ? ' checked' : '') + '>' +
     '<label for="sSnap">Snap to</label><select id="sSnap">' + [1, 5, 10, 20].map(v => '<option' + (settings.snap === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select>' +
     '<label for="pName">Project name</label><input type="text" id="pName" value="' + esc(project.name) + '">' +
@@ -2372,21 +2721,113 @@ $('#settingsBody').addEventListener('click', (e) => {
 $('#settingsBody').addEventListener('input', (e) => {
   const t = e.target, ps = project.settings;
   if (t.dataset.themeColor) { settings.themeColors=settings.themeColors||{}; settings.themeColors[t.dataset.themeColor]=t.value; } else if (t.id === 'sAccent') settings.accent = t.value; else if (t.id === 'sUi') settings.uiSize = +t.value; else if (t.id === 'sCode') settings.codeSize = +t.value;
-  else if (t.id === 'sGrid') settings.grid = t.checked; else if (t.id === 'sSnap') settings.snap = +t.value;
+  else if (t.id === 'sTouch') settings.touch = t.value; else if (t.id === 'sGrid') settings.grid = t.checked; else if (t.id === 'sSnap') settings.snap = +t.value;
   else if (t.id === 'pName') { project.name = t.value || 'Untitled'; markDirty(); }
   else if (t.id === 'pW') { ps.stageW = clampN(+t.value || 480, 64, 1920); markDirty(); } else if (t.id === 'pH') { ps.stageH = clampN(+t.value || 360, 64, 1080); markDirty(); }
   else if (t.id === 'pBg') { ps.bg = t.value; markDirty(); } else if (t.id === 'pLighting') { ps.lighting=ps.lighting||{ambient:0.78};ps.lighting.enabled=t.checked;markDirty(); } else if (t.id === 'pAmbient') { ps.lighting=ps.lighting||{enabled:true};ps.lighting.ambient=+t.value;markDirty(); } else if (t.id === 'pPhys') { ps.autoPhysics = t.checked; markDirty(); }
   lsSet('gx-settings', settings); applyTheme();
 });
-const LEARN = '<p>Integral is the scripting language for g(x). It reads like plain English, with <code>(parentheses)</code> around numbers and text, <code>&lt;angle brackets&gt;</code> around true/false values and <code>/slashes/</code> around vectors. Every block ends with <code>end</code>. Open the Script tab and use the Blocks list to insert any command.</p>' +
-  '<h3>Lesson 1 · Move something</h3><pre>on start\n  indef\n    edit att.x = (att.x + 1)\n  end</pre><p>Scripts begin with an event. <code>indef</code> runs once per frame. <code>att.x</code> is an attribute of the object running the script.</p>' +
-  '<h3>Lesson 2 · Keys and conditions</h3><pre>on start\n  indef\n    if &lt;key (space) down?&gt; then\n      edit att.y = (att.y + 4)\n    end\n  end</pre>' +
-  '<h3>Lesson 3 · Messages and timers</h3><pre>on start\n  create timer (clock)\n  start timer (clock)\n  indef\n    wait (1) secs\n    broadcast message (tick) with data (secs of timer (clock))\n  end\non message (tick)\n  print((received data))</pre>' +
-  '<h3>Lesson 4 · Constructs</h3><pre>on start\n  repeat (5)\n    construct new (circle) with radius (6) at (0,0) with ID (dot)\n  end\non construct start\n  indef\n    edit att.x = (att.x + (random (-3) to (3)))\n  end</pre><p>Constructs are objects made by a script while the game runs. They run the <code>on construct start</code> event of the object that created them.</p>' +
-  '<h3>Notes on this build</h3><p>Directions are in degrees, 0 = right, counter-clockwise. <code>repeat</code> runs all its loops in one frame unless it contains a wait, so <code>wait (0) secs</code> advances one frame. Write coordinates without a space after the comma: <code>(10,20)</code>. A video tutorial series is not part of this build.</p>';
-function openLearn() { $('#learnBody').innerHTML = LEARN; $('#mLearn').classList.add('on'); }
+const DOCS = [
+ {id:'start',title:'Start here',items:[
+  {id:'overview',title:'Overview',html:`<p class="docs-lead">g(x) is a small game and interactive-scene editor. Integral is its plain-English scripting language; the editor supplies objects, assets, animation, physics, textures, and a runtime.</p><h3>Two things to learn</h3><p><b>Integral</b> describes logic: when a script starts, what it checks, and what it changes. <b>g(x)</b> is the wider tool: the scene, object properties, assets, editor workspaces, and how a project runs.</p><p>Use the documentation tree to move between concepts. Code examples are intended to be read and adapted in the Script workspace.</p>`},
+  {id:'workflow',title:'Editor workflow',html:`<ol><li>Create or select an object in <b>Scene</b>.</li><li>Adjust its properties in <b>Inspector</b>, and add images or sounds in <b>Assets</b>.</li><li>Open <b>Script</b> to edit that object's Integral scripts.</li><li>Use <b>Play</b> to run the project and <b>Stop</b> to return to editing.</li><li>Save a project file for continued editing; export playable HTML to share a playable build.</li></ol><p>Animations and Textures have their own workspaces. On mobile, use the bottom workspace tabs and the Objects/Props drawers.</p>`},
+  {id:'projects',title:'Projects and saves',html:`<p>A g(x) project contains scene objects, object properties, scripts, settings, and asset data. Use <b>Project → Save to computer</b> to save an editable project, and <b>Open from computer</b> to load one.</p><p>Use backups before major changes. <b>Export playable HTML</b> creates a separate file intended to run the game in a browser; it is not the editable project format.</p>`}
+ ]},
+ {id:'integral',title:'Integral language',items:[
+  {id:'syntax',title:'Syntax and values',html:`<p>Integral is written as lines of plain-English-like commands. A script normally starts with an event hat, and nested blocks are closed with <code>end</code>.</p><p>Its delimiters have different roles:</p><ul><li><code>(...)</code> groups a value or expression.</li><li><code>&lt;...&gt;</code> groups a Boolean condition.</li><li><code>/vector.../</code> represents a vector.</li><li><code>[...,...]</code> represents a list.</li></ul><pre>on start
+  print(("Hello, world!"))
+end</pre><p>Keep coordinate pairs compact, such as <code>(10,20)</code>. Directions are in degrees: 0 points right and positive angles turn counter-clockwise.</p>`},
+  {id:'events',title:'Events and scripts',html:`<p>An event hat determines when a script begins. The following examples use common event forms:</p><pre>on start
+  print(("Ready"))
+end
+
+on key (space) pressed
+  print(("Jump"))
+end
+
+on message (tick)
+  print((received data))
+end</pre><p>Event names are part of the language syntax; use the Blocks palette for the exact forms supported by this build. Each object can have its own scripts.</p>`},
+  {id:'loops',title:'Loops and conditions',html:`<p>Use conditions to choose whether a block runs, and loops to repeat work. Close each nested block with <code>end</code>.</p><pre>on start
+  repeat (5)
+    print(step)
+  end
+  indef
+    if &lt;key (space) down&gt; then
+      edit att.y = (att.y + 4)
+    end
+  end</pre><p><code>indef</code> is a per-frame loop. A <code>repeat</code> loop runs its iterations in the current frame unless its body yields, for example with <code>wait (0) secs</code>.</p>`},
+  {id:'expressions',title:'Expressions and math',html:`<p>Expressions can combine numbers, attributes, reporters, and functions. Supported math functions include <code>sin</code>, <code>cos</code>, <code>tan</code>, inverse trig functions, <code>sqrt</code>, <code>abs</code>, <code>floor</code>, <code>ceiling</code>, <code>round</code>, <code>ln</code>, <code>log</code>, <code>exp</code>, <code>sign</code>, <code>min</code>, and <code>max</code>.</p><pre>edit att.x = (att.x + 2)
+edit att.y = (sin (att.x) * 20)
+print(distance from (0,0) to (att.x,att.y))</pre><p>Trigonometric functions use degrees in this runtime. Use the Blocks palette to discover other reporters such as random ranges, clamping, interpolation, text operations, and list operations.</p>`},
+  {id:'attributes',title:'Attributes and objects',html:`<p><code>att.name</code> refers to an attribute on the current object. For example, <code>att.x</code> and <code>att.y</code> are commonly used for position. The Inspector edits object properties directly; scripts can change attributes while running.</p><pre>on start
+  indef
+    edit att.x = (att.x + 1)
+  end
+end</pre><p>Use the Inspector to check an object's available properties rather than assuming every object type has identical attributes.</p>`},
+  {id:'messages',title:'Messages and data',html:`<p>Messages let scripts react to named events and carry a value to the receiving script.</p><pre>on start
+  broadcast message (score changed) with data (10)
+
+on message (score changed)
+  print((received data))</pre><p>The receiver reads the payload with <code>received data</code>. Messages are useful for separating input, gameplay, and interface logic.</p>`},
+  {id:'timers',title:'Timers and waiting',html:`<p>Create a named timer, start it, then read elapsed time using the timer reporters.</p><pre>on start
+  create timer (clock)
+  start timer (clock)
+  wait (1) secs
+  print((secs of timer (clock)))
+end</pre><p>Available time reporters include milliseconds, seconds, minutes, and hours. Timers can be started, ended, set, and deleted. A wait yields execution; <code>wait (0) secs</code> advances to another frame.</p>`},
+  {id:'lists',title:'Lists and text',html:`<p>Integral includes list operations for creating lists, adding and replacing items, deleting items, clearing lists, reading an item, and calculating length, sum, or average. Text reporters support joining, length, searching, slicing, replacing, counting, and changing letter case.</p><pre>new list (inventory) ID (items)
+add (key) to list (items)
+print((length of list (items)))</pre><p>Use the Blocks palette to insert the precise list command template and its argument order.</p>`},
+  {id:'vectors',title:'Vectors',html:`<p>Vectors are enclosed in slashes and can be used where a vector value is expected.</p><pre>point towards (/vector(10,20)/)
+print((magnitude of (/vector(3,4)/)))</pre><p>Vector reporters include angle, magnitude, x, and y. Vector syntax is distinct from a coordinate pair in parentheses.</p>`}
+ ]},
+ {id:'gxtool',title:'The g(x) editor',items:[
+  {id:'scene',title:'Scene and Inspector',html:`<p>The Scene workspace is where objects are selected and positioned. Use the viewport controls to fit, zoom, or reset the view; drag objects to move them. The Inspector contains editable properties for the selected object.</p><p>The Objects panel organizes scene objects. Select an item to inspect it, duplicate it, or delete it. The object tree and Inspector become slide-out drawers on small screens.</p>`},
+  {id:'assets',title:'Assets',html:`<p>Assets are imported images and sounds available to the project. Use the Assets panel to add files. Sprites can use image assets, and scripts can play or stop sounds by their project identifiers.</p><p>Keep asset names and IDs easy to distinguish. Save the project after importing assets so the editable project retains them.</p>`},
+  {id:'constructs',title:'Constructs',html:`<p>Constructs are runtime objects created by scripts. They are useful for repeated or temporary objects such as projectiles, particles, or targets.</p><pre>on start
+  repeat (5)
+    construct new (circle) with radius (6) at (0,0) with ID (dot)
+  end
+
+on construct start
+  indef
+    edit att.x = (att.x + (random (-3) to (3)))
+  end</pre><p>The creator's <code>on construct start</code> script runs for each construct it creates. Prefer constructs and loops for repeated objects rather than hand-authoring each one.</p>`},
+  {id:'physics',title:'Physics',html:`<p>Integral includes commands for enabling or disabling physics, stepping physics, choosing circular or polygonal collision mode, setting density and gravity, assigning velocity, adding rotational velocity, wind, and applying force.</p><pre>on start
+  enable physics for (self)
+  set mode to circular
+  set gravity to (9.8)
+  set velocity to (/vector(0,0)/)
+end</pre><p>Physics settings affect runtime behavior. Test changes with Play and inspect the result before adding more forces or constraints.</p>`},
+  {id:'animation',title:'Keyframe animations',html:`<p>The Animations workspace creates animations with a target object, duration, playback mode, and keyframes. Keyframes can animate position, rotation, and scale. Playback can run once, loop, or ping-pong.</p><p>Scripts can control an animation using <code>playAnim(animationID)</code> and <code>pauseAnim(animationID)</code>. Use Preview to check timing before running the whole project.</p>`},
+  {id:'textures',title:'Pixel and vector textures',html:`<p>The Textures workspace has two modes. Pixel mode paints raster textures with tools, colors, brush sizes, and zoom. Vector SVG mode edits scalable shapes such as rectangles, ellipses, lines, paths, and text.</p><p>The vector tools include selection, layer ordering, duplication, deletion, import/export, and shape operations. Save a texture to add it to the project; use the selected-object options to apply it.</p>`},
+  {id:'runtime',title:'Run, debug, export',html:`<p><b>Play</b> runs the project and <b>Stop</b> halts it. The Output panel reports runtime messages and diagnostics. Script diagnostics appear below the editor; fix syntax errors before investigating runtime behavior.</p><p>Export playable HTML packages a runnable browser build. Keep the editable project file separately so you can continue editing in g(x).</p>`},
+  {id:'mobile',title:'Mobile controls',html:`<p>The editor adapts to narrow screens: workspace tabs move to the bottom, Objects and Inspector open as drawers, the Blocks palette becomes a sheet, and the script editor provides a compact key row. Touch controls can be configured in Settings.</p><p>For scene navigation, use the on-screen viewport controls. For game input, use the touch controls shown by the runtime when enabled.</p>`}
+ ]},
+ {id:'reference',title:'Reference',items:[
+  {id:'blocks',title:'Block palette index',html:`<p>The Blocks palette is the live index of command, reporter, and condition templates supported by the current build. Click a template to insert it into the script. It is the most reliable place to confirm exact spelling and argument order.</p><p>Categories include expressions and text, events, messages, timers, lists, constructs, drawing, movement, sound, textures, and physics. Not every command is meaningful in every script context.</p>`},
+  {id:'troubleshooting',title:'Troubleshooting',html:`<h3>Script will not run</h3><p>Read the diagnostic line and check event names, matching parentheses/angle brackets/slashes, and closing <code>end</code> lines.</p><h3>Nothing changes</h3><p>Confirm the script belongs to the intended object, the relevant event occurs, and the object is visible in the runtime.</p><h3>Movement is too fast</h3><p>Put continuous behavior inside <code>indef</code> and use small per-frame changes. Use waits or animation duration for timed actions.</p><h3>Export differs from the editor</h3><p>Save the project, run it in the Game workspace, and export a fresh HTML build after changes.</p>`},
+  {id:'limits',title:'Build notes',html:`<p>This documentation describes the features present in this editor build. Some examples are illustrative and may need small adjustments to match the selected object's properties or the exact command templates in the Blocks palette.</p><p>For exact syntax, use the palette and the diagnostics rather than guessing command spellings.</p>`}
+ ]}
+];
+function openLearn() {
+ const modal = $('#mLearn');
+ modal.classList.remove('top-visible');
+ const host = $('#learnBody');
+ host.innerHTML = '<nav class="docs-nav" aria-label="Documentation contents"><div class="docs-search-wrap"><input id="docsSearch" type="search" placeholder="Search documentation…" aria-label="Search documentation"></div><div id="docsTree"></div></nav><article class="docs-article" id="docsArticle" tabindex="-1"></article>';
+ const tree = $('#docsTree'), article = $('#docsArticle'); let active = 'overview';
+ const all = DOCS.flatMap(section => section.items.map(item => ({...item,section:section.title,sectionId:section.id})));
+ function show(id, focus=false) { const item=all.find(x=>x.id===id)||all[0]; active=item.id; article.innerHTML='<div class="docs-crumb">'+item.section+' / '+item.title+'</div><h2>'+item.title+'</h2>'+item.html; tree.querySelectorAll('[data-doc]').forEach(b=>{b.classList.toggle('active',b.dataset.doc===active);b.setAttribute('aria-current',b.dataset.doc===active?'page':'false')}); if(focus)article.focus(); }
+ function renderTree(query='') { const q=query.trim().toLowerCase(); tree.innerHTML=''; DOCS.forEach(section=>{const matches=section.items.filter(it=>!q||(section.title+' '+it.title+' '+it.html.replace(/<[^>]+>/g,' ')).toLowerCase().includes(q)); if(!matches.length)return; const group=document.createElement('section');group.className='docs-group';const head=document.createElement('div');head.className='docs-group-title';head.textContent=section.title;group.appendChild(head);matches.forEach(it=>{const b=document.createElement('button');b.type='button';b.className='docs-link';b.dataset.doc=it.id;b.textContent=it.title;b.onclick=()=>show(it.id);group.appendChild(b)});tree.appendChild(group)}); if(!tree.children.length)tree.innerHTML='<p class="docs-no-results">No matching topics.</p>'; tree.querySelectorAll('[data-doc]').forEach(b=>b.classList.toggle('active',b.dataset.doc===active)); }
+ renderTree(); show(active); $('#docsSearch').addEventListener('input',e=>renderTree(e.target.value)); modal.classList.add('on');
+}
 $$('.modal').forEach(m => { m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.classList.remove('on'); }); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $$('.modal.on').forEach(m => m.classList.remove('on')); });
+const docsModal = $('#mLearn');
+docsModal.addEventListener('mousemove', e => docsModal.classList.toggle('top-visible', e.clientY <= 56));
+docsModal.addEventListener('mouseleave', () => docsModal.classList.remove('top-visible'));
+docsModal.addEventListener('touchstart', e => { if(e.touches[0] && e.touches[0].clientY <= 72) docsModal.classList.add('top-visible'); }, {passive:true});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $$('.modal.on').forEach(m => m.classList.remove('on')); closeDrawers(); document.body.classList.remove('blocks-open'); } });
 
 /* ---------- menus + actions ---------- */
 function act(a) {
@@ -2400,7 +2841,7 @@ function act(a) {
     case 'addRect': addObject('rectangle'); break; case 'addCircle': addObject('circle'); break; case 'addSprite': addObject('sprite'); break; case 'addCamera': addObject('camera'); break; case 'addEmpty': addObject('empty'); break; case 'addLight': addObject('light'); break;
     case 'dup': duplicateSelected(); break; case 'del': deleteSelected(); break;
     case 'learn': openLearn(); break;
-    case 'about': toast('g(x) prototype · objects, Integral scripting, textures, backups, export'); break;
+    case 'about': toast('g(x) prototype  /  objects, Integral scripting, textures, backups, export'); break;
   }
 }
 document.addEventListener('click', (e) => {
@@ -2410,9 +2851,69 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]'); if (b) { act(b.dataset.act); if (m) m.classList.remove('open'); }
 });
 
+/* ---------- small screens + touch ---------- */
+const mqSmall = window.matchMedia('(max-width: 760px)');
+function closeDrawers() { document.body.classList.remove('drawer-left', 'drawer-right'); }
+function openDrawer(side) { closeDrawers(); document.body.classList.add('drawer-' + side); }
+function applyTouch() {
+  const coarse = window.matchMedia('(pointer: coarse)').matches || mqSmall.matches;
+  document.body.classList.toggle('touch', settings.touch === 'on' || (settings.touch !== 'off' && coarse));
+}
+function layoutMobile() {
+  const tabs = $('.tabs');
+  if (mqSmall.matches) $('#mobnav').appendChild(tabs); else $('#top').insertBefore(tabs, $('.runbar'));
+  closeDrawers(); document.body.classList.remove('blocks-open'); applyTouch(); fitGame(); texSync(); resizeVp();
+}
+mqSmall.addEventListener('change', layoutMobile);
+$('#btnObjects').onclick = () => openDrawer('left');
+$('#btnInsp').onclick = () => openDrawer('right');
+$('#scrim').onclick = closeDrawers;
+$$('.closeDrawer').forEach(b => b.onclick = closeDrawers);
+$('#btnPalette').onclick = () => document.body.classList.toggle('blocks-open');
+$('#closeBlocks').onclick = () => document.body.classList.remove('blocks-open');
+const CODE_KEYS = [['⇥', '  '], ['(', '('], [')', ')'], ['<', '<'], ['>', '>'], ['[', '['], [']', ']'], ['/', '/'], [',', ','], ['=', ' = '], ['.', '.'], ['end', 'end']];
+$('#keyrow').innerHTML = CODE_KEYS.map(([l, t], i) => '<button data-ck="' + i + '" aria-label="Insert ' + l + '">' + l + '</button>').join('');
+$('#keyrow').addEventListener('pointerdown', (e) => e.preventDefault());
+$('#keyrow').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ck]'); const ta = $('#code'); if (!b || ta.disabled) return;
+  ta.focus(); ta.setRangeText(CODE_KEYS[+b.dataset.ck][1], ta.selectionStart, ta.selectionEnd, 'end'); codeInput();
+});
+$$('#touchpad button').forEach(b => {
+  const k = b.dataset.k;
+  const dn = (e) => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (er) {} b.classList.add('down'); if (rt && playing) rt.key(k, true); };
+  const up = (e) => { e.preventDefault(); b.classList.remove('down'); if (rt) rt.key(k, false); };
+  b.addEventListener('pointerdown', dn); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
+});
+
+
+/* two-finger pinch zoom for the scene viewport (capture phase, so it pre-empts the single-finger handlers) */
+(function () {
+  const ptrs = new Map(); let pinch = null;
+  const pos = (e) => { const r = vp.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const pair = () => { const [a, b] = [...ptrs.values()]; return { a, b, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) || 1 }; };
+  vp.addEventListener('pointerdown', (e) => {
+    ptrs.set(e.pointerId, pos(e));
+    if (ptrs.size >= 2) {
+      if (vpDrag && (vpDrag.mode === 'resize' || vpDrag.mode === '3move' || (vpDrag.mode === 'move' && vpDrag.moved))) { commit(); renderInspector(); }
+      vpDrag = null; e.stopImmediatePropagation();
+      if (ptrs.size === 2) { const p = pair(); const w = view3D ? [0, 0] : s2w(p.mx, p.my); pinch = { d0: p.d, z0: view3D ? cam3D.zoom : cam.zoom, wx: w[0], wy: w[1] }; }
+    }
+  }, true);
+  vp.addEventListener('pointermove', (e) => {
+    if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, pos(e));
+    if (!pinch || ptrs.size < 2) return;
+    e.stopImmediatePropagation(); const p = pair(); const k = p.d / pinch.d0;
+    if (view3D) cam3D.zoom = clampN(pinch.z0 * k, .2, 4);
+    else { const d = window.devicePixelRatio || 1; const W = vp.width / d, H = vp.height / d; cam.zoom = clampN(pinch.z0 * k, .1, 8); cam.x = pinch.wx - (p.mx - W / 2) / cam.zoom; cam.y = pinch.wy + (p.my - H / 2) / cam.zoom; }
+    drawVp();
+  }, true);
+  const end = (e) => { const was = pinch; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (was) { vpDrag = null; e.stopImmediatePropagation(); } else if (e.type === 'pointercancel') vpDrag = null; };
+  vp.addEventListener('pointerup', end, true); vp.addEventListener('pointercancel', end, true);
+})();
+
 /* ---------- boot ---------- */
 (async function boot() {
-  applyTheme();
+  applyTheme(); if (mqSmall.matches) $('#texZoom').value = 'fit'; layoutMobile();
   refreshAnimationUI();
   await Store.open();
   const s = await Store.get('session');
