@@ -168,8 +168,8 @@ input[type=checkbox]{accent-color:var(--accent)}
 .swatches{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
 .swatches button{height:18px;padding:0;border-radius:3px}
 /* game */
-#gameWs{flex-direction:column;align-items:center;justify-content:center;background:#0b0c0e;position:relative}
-#game{max-width:100%;max-height:100%;image-rendering:pixelated;background:#000;box-shadow:0 0 0 1px #333}
+#gameWs{flex-direction:column;align-items:center;justify-content:center;background:var(--bg0);position:relative}
+#game{max-width:100%;max-height:100%;image-rendering:pixelated;background:#000;box-shadow:none}
 #runtimeOverlays{position:absolute;inset:0;pointer-events:none;overflow:hidden} .gx-monitor{position:absolute;pointer-events:auto;box-sizing:border-box;min-width:170px;min-height:64px;width:220px;height:104px;resize:both;overflow:hidden;background:var(--bg1);border:1px solid var(--line);border-radius:4px;box-shadow:0 5px 18px #0005;color:var(--fg);font:12px/1.45 var(--mono);z-index:5}.gx-monitor header{cursor:move;user-select:none;display:flex;align-items:center;gap:6px;padding:5px 7px;background:var(--bg2);border-bottom:1px solid var(--line);font:600 11px var(--mono);color:var(--fg)}.gx-monitor header span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gx-monitor header button{margin-left:auto;flex:none;padding:0 5px;line-height:18px;background:transparent;border:1px solid transparent;color:var(--fg2);cursor:pointer}.gx-monitor header button:hover{background:var(--err);color:white}.gx-monitor pre{height:calc(100% - 29px);box-sizing:border-box;margin:0;padding:7px;white-space:pre-wrap;overflow:auto;overflow-wrap:anywhere;font:12px/1.45 var(--mono)}.gx-input-shade{position:absolute;inset:0;z-index:20;background:#0008;display:flex;align-items:center;justify-content:center;pointer-events:auto}.gx-input-card{width:min(340px,90%);padding:16px;background:#252930;border:1px solid #626b78;border-radius:8px;box-shadow:0 12px 40px #0009}.gx-input-card label{display:block;margin-bottom:10px}.gx-input-card input{width:100%;box-sizing:border-box;margin-top:7px}
 .gamebar{position:absolute;top:8px;left:8px;color:#aab;font:11px var(--mono)}
 /* bottom panel */
@@ -518,7 +518,7 @@ button.primary:hover,#btnPlay:hover,#btnStop:hover{background:var(--bg3);color:v
         </div>
         <div class="texstage"><canvas id="texCanvas"></canvas><svg id="vecCanvas" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="application" aria-label="Vector costume canvas" hidden></svg></div>
       </div>
-      <div class="ws" id="gameWs"><canvas id="game"></canvas><div class="gamebar" id="gameBar">Press Play to run the project.</div>
+      <div class="ws" id="gameWs"><canvas id="game"></canvas><div class="gamebar" id="gameBar">Press Play to run the project.</div><button id="toggleMonitors" type="button" style="position:absolute;top:6px;right:8px;z-index:10" hidden>Show variable monitors</button>
         <div id="touchpad" aria-label="Touch controls"><div class="dpad"><button data-k="up arrow" aria-label="Up">▲</button><button data-k="left arrow" aria-label="Left">◀</button><button data-k="right arrow" aria-label="Right">▶</button><button data-k="down arrow" aria-label="Down">▼</button></div><div class="abtns"><button data-k="z" aria-label="Z key">Z</button><button data-k="space" aria-label="Space key">␣</button></div></div><div id="runtimeOverlays"></div></div>
     </main>
     <aside class="dock right">
@@ -1187,7 +1187,7 @@ function Runtime(project, opts) {
       id: def.id, name: def.name, type: def.type, def, base: def,
       x: def.x || 0, y: def.y || 0, z: def.z || 0, rotation: def.rotation || 0, rotationX: def.rotationX || 0, rotationY: def.rotationY || 0,
       rectLength: def.rectLength || 40, rectHeight: def.rectHeight || 40, cRadius: def.cRadius || 20,
-      color: def.color || '#6aa0ff', visible: def.visible !== false,
+      color: def.color || '#6aa0ff', visible: def.visible !== false, transparency: clamp(Number(def.transparency??0),0,1), reflectiveness: clamp(Number(def.reflectiveness??0),0,1), refractiveness: clamp(Number(def.refractiveness??0),0,1),
       texList, texIndex: texList.length ? 0 : -1, texOverride: null, stretch: null,
       vars: {}, customAtt: Object.assign({}, def.customAtt || {}), timers: {}, data: Object.assign({}, def.data || {}),
       brush: { down: false, color: [0, 0, 0], size: 1, alpha: 0 },
@@ -1581,7 +1581,7 @@ function Runtime(project, opts) {
   function drawEntity(ctx, e, ox, oy) {
     const x = (ox === undefined ? e.x : ox), y = (oy === undefined ? e.y : oy);
     const camera = runtimeCamera();
-    ctx.save(); if (camera) { ctx.translate(W/2, H/2); ctx.rotate((camera.rotation||0)*D2R); ctx.translate(-camera.x, camera.y); } else ctx.translate(W/2, H/2); ctx.translate(x, -y); ctx.rotate(-e.rotation * D2R); ctx.scale((e.def && e.def.flipX ? -1 : 1)*(e.animScaleX||1), (e.def && e.def.flipY ? -1 : 1)*(e.animScaleY||1));
+    ctx.save(); ctx.globalAlpha *= 1-clamp(Number(e.transparency??e.def?.transparency??0),0,1); if (camera) { ctx.translate(W/2, H/2); ctx.rotate((camera.rotation||0)*D2R); ctx.translate(-camera.x, camera.y); } else ctx.translate(W/2, H/2); ctx.translate(x, -y); ctx.rotate(-e.rotation * D2R); ctx.scale((e.def && e.def.flipX ? -1 : 1)*(e.animScaleX||1), (e.def && e.def.flipY ? -1 : 1)*(e.animScaleY||1));
     const tex = e.texOverride || (e.texIndex >= 0 ? e.texList[e.texIndex] : null);
     const sz = e.stretch || size(e);
     if (tex && tex.img) ctx.drawImage(tex.img, -sz[0] / 2, -sz[1] / 2, sz[0], sz[1]);
@@ -1635,7 +1635,193 @@ function Runtime(project, opts) {
       for(let k=-250;k<=250;k+=50){let a=projectRuntime3D(-250,0,k),b=projectRuntime3D(250,0,k),c=projectRuntime3D(k,0,-250),d=projectRuntime3D(k,0,250);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();}ctx.restore();
       vis.slice().sort((a,b)=>projectRuntime3D(b.x,b.y,b.z)[2]-projectRuntime3D(a.x,a.y,a.z)[2]).forEach(e=>drawRuntime3D(ctx,e));
     } else { ctx.drawImage(pen, 0, 0); for (const e of vis) drawEntity(ctx, e); }
-    if (S.lighting && S.lighting.enabled !== false) { const ambient=clamp(Number(S.lighting.ambient??0.78),0,1); ctx.save();ctx.globalCompositeOperation='source-over';ctx.fillStyle='rgba(0,0,0,'+(1-ambient)+')';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='destination-out';for(const l of entities.filter(e=>e.alive&&e.visible&&e.type==='light')){const cx=W/2+l.x,cy=H/2-l.y,r=Math.max(1,l.lightRadius||260),g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,'rgba(0,0,0,'+clamp(l.lightIntensity??.85,0,1)+')');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();}ctx.globalCompositeOperation='lighter';for(const l of entities.filter(e=>e.alive&&e.visible&&e.type==='light')){const cx=W/2+l.x,cy=H/2-l.y,r=Math.max(1,l.lightRadius||260),g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,(l.color||'#fff2c4')+Math.round(clamp(l.lightIntensity??.85,0,1)*80).toString(16).padStart(2,'0'));g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();}ctx.restore(); }
+    if (S.lighting && S.lighting.enabled !== false) {
+      const ambient = clamp(Number(S.lighting.ambient ?? 0.78), 0, 1);
+      const lights = entities.filter(e => e.alive && e.visible && e.type === 'light');
+      const cam = runtimeCamera();
+      // Match drawEntity's Canvas transform exactly. World y is up, Canvas y is down.
+      const worldToScreen = (x, y) => {
+        const dx = x - (cam ? cam.x : 0), dy = y - (cam ? cam.y : 0);
+        const a = (cam?.rotation || 0) * D2R, c = Math.cos(a), sn = Math.sin(a);
+        return [W / 2 + dx * c + dy * sn, H / 2 + dx * sn - dy * c];
+      };
+      // Keep ambient shading separate from the visible, individually drawn light paths.
+      ctx.save();
+      ctx.fillStyle = `rgba(0,0,0,${1 - ambient})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+
+      // Use actual ray intersections against object boundaries. Rectangles use four
+      // transformed edges; circles use the quadratic ray/circle intersection.
+      const blockers = entities.filter(e => e.alive && e.visible && !['light', 'camera', 'empty', 'global'].includes(e.type));
+      const boundaries = [];
+      for (const e of blockers) {
+        if (e.type === 'circle') {
+          const [cx, cy] = worldToScreen(e.x, e.y);
+          boundaries.push({ kind: 'circle', e, cx, cy, r: Math.max(1, Number(e.cRadius) || 20) });
+        } else {
+          const w = Math.max(1, Number(e.rectLength || 40) / 2), h = Math.max(1, Number(e.rectHeight || 40) / 2);
+          const a = -(e.rotation || 0) * D2R, c = Math.cos(a), s = Math.sin(a);
+          const pts = [[-w,-h],[w,-h],[w,h],[-w,h]].map(([x,y]) => worldToScreen(e.x + x*c - y*s, e.y + x*s + y*c));
+          for (let i=0; i<4; i++) boundaries.push({ kind:'segment', e, a:pts[i], b:pts[(i+1)%4] });
+        }
+      }
+      const EPS = 0.08;
+      function intersectRay(ox, oy, dx, dy, shape) {
+        if (shape.kind === 'circle') {
+          const fx = ox - shape.cx, fy = oy - shape.cy;
+          const b = 2 * (fx*dx + fy*dy), c = fx*fx + fy*fy - shape.r*shape.r;
+          const disc = b*b - 4*c;
+          if (disc < 0) return null;
+          const root = Math.sqrt(disc);
+          const ts = [(-b-root)/2, (-b+root)/2];
+          const t = ts.find(v => v > EPS);
+          if (t == null) return null;
+          const hx = ox + dx*t, hy = oy + dy*t;
+          const nl = Math.hypot(hx-shape.cx, hy-shape.cy) || 1;
+          let nx = (hx-shape.cx)/nl, ny = (hy-shape.cy)/nl;
+          if (dx*nx + dy*ny > 0) { nx = -nx; ny = -ny; }
+          return { t, x:hx, y:hy, nx, ny, e:shape.e };
+        }
+        const sx = shape.b[0]-shape.a[0], sy = shape.b[1]-shape.a[1];
+        const den = dx*sy - dy*sx;
+        if (Math.abs(den) < 1e-9) return null;
+        const qx=shape.a[0]-ox, qy=shape.a[1]-oy;
+        const t=(qx*sy-qy*sx)/den, u=(qx*dy-qy*dx)/den;
+        if (t <= EPS || u < -1e-7 || u > 1+1e-7) return null;
+        const sl=Math.hypot(sx,sy)||1;
+        let nx=-sy/sl, ny=sx/sl;
+        if (dx*nx+dy*ny>0) { nx=-nx; ny=-ny; }
+        return { t, x:ox+dx*t, y:oy+dy*t, nx, ny, e:shape.e };
+      }
+      function nearestHit(ox, oy, dx, dy) {
+        let best=null;
+        for (const shape of boundaries) {
+          const hit=intersectRay(ox,oy,dx,dy,shape);
+          if (hit && (!best || hit.t < best.t)) best=hit;
+        }
+        return best;
+      }
+      function viewportDistance(x,y,dx,dy) {
+        let t=Infinity;
+        if(dx>1e-9)t=Math.min(t,(W-x)/dx); else if(dx< -1e-9)t=Math.min(t,(0-x)/dx);
+        if(dy>1e-9)t=Math.min(t,(H-y)/dy); else if(dy< -1e-9)t=Math.min(t,(0-y)/dy);
+        return Math.max(0,t);
+      }
+      function materialValue(e,key) { return clamp(Number(e[key] ?? e.def?.[key] ?? 0),0,1); }
+      // Trace rays into a segment buffer first. Drawing immediately caused the
+      // later, nearly-opaque primary fan to visually bury reflected paths.
+      function traceRay(segments, x, y, dx, dy, energy, depth, media, kind='primary') {
+        if (energy < 0.025 || depth > 3) return;
+        const hit = nearestHit(x, y, dx, dy);
+        const edgeT = viewportDistance(x, y, dx, dy);
+        const t = hit ? Math.min(hit.t, edgeT) : edgeT;
+        if (!(t > 0) || !Number.isFinite(t)) return;
+        const ex = x + dx * t, ey = y + dy * t;
+        segments.push({x1:x, y1:y, x2:ex, y2:ey, energy, depth, kind});
+        if (!hit || hit.t >= edgeT) return;
+
+        const e = hit.e;
+        const transparency = materialValue(e, 'transparency');
+        const reflectiveness = materialValue(e, 'reflectiveness');
+        const refractiveness = materialValue(e, 'refractiveness');
+        const nx = hit.nx, ny = hit.ny, dot = dx * nx + dy * ny;
+
+        // Mirror reflection: reflect the incident direction about the hit normal.
+        // The normal points back into the medium the ray came from.
+        const reflectedEnergy = energy * reflectiveness;
+        if (reflectedEnergy >= 0.025 && depth < 3) {
+          const rdx = dx - 2 * dot * nx, rdy = dy - 2 * dot * ny;
+          const rlen = Math.hypot(rdx, rdy) || 1;
+          traceRay(segments, ex + nx * 0.75, ey + ny * 0.75, rdx / rlen, rdy / rlen,
+            reflectedEnergy, depth + 1, new Set(media), 'reflected');
+        }
+
+        // Energy not reflected is either transmitted or absorbed by the object.
+        const transmittedEnergy = energy * (1 - reflectiveness) * transparency;
+        if (transmittedEnergy < 0.025 || depth >= 3) return;
+        let ndx = dx, ndy = dy, bent = false;
+        const isInside = media.has(e.id);
+        if (refractiveness > 0.001) {
+          // Snell's law in 2D, with a simple UI value mapped to refractive index [1, 2.5].
+          const n1 = isInside ? 1 + 1.5 * refractiveness : 1;
+          const n2 = isInside ? 1 : 1 + 1.5 * refractiveness;
+          const cosi = clamp(-(dx * nx + dy * ny), -1, 1);
+          const eta = n1 / n2, k = 1 - eta * eta * (1 - cosi * cosi);
+          if (k < 0) {
+            const rdx = dx - 2 * dot * nx, rdy = dy - 2 * dot * ny;
+            traceRay(segments, ex + nx * 0.75, ey + ny * 0.75, rdx, rdy,
+              transmittedEnergy, depth + 1, new Set(media), 'reflected');
+            return;
+          }
+          ndx = eta * dx + (eta * cosi - Math.sqrt(k)) * nx;
+          ndy = eta * dy + (eta * cosi - Math.sqrt(k)) * ny;
+          const len = Math.hypot(ndx, ndy) || 1; ndx /= len; ndy /= len;
+          bent = Math.abs(ndx - dx) + Math.abs(ndy - dy) > 0.002;
+        }
+        const nextMedia = new Set(media);
+        if (isInside) nextMedia.delete(e.id); else nextMedia.add(e.id);
+        traceRay(segments, ex + ndx * 0.75, ey + ndy * 0.75, ndx, ndy,
+          transmittedEnergy, depth + 1, nextMedia, bent ? 'refracted' : 'transmitted');
+      }
+      for (const light of lights) {
+        const [ox,oy]=worldToScreen(light.x,light.y);
+        const intensity=clamp(Number(light.lightIntensity ?? 0.85),0,1);
+        ctx.save();
+        const tracedSegments = [];
+        // Sparse primary rays keep reflections/transmissions distinguishable.
+        // Add tiny angle offsets toward boundaries to sample the shadow edges.
+        const angleMap = new Map();
+        const addAngle = a => {
+          if (angleMap.size < 320) angleMap.set(Math.round(a * 1e6), a);
+        };
+        const rayCount=64;
+        for(let i=0;i<rayCount;i++) addAngle(i*Math.PI*2/rayCount);
+        // Deduplicate shared rectangle corners, which otherwise multiply ray count.
+        const vertexKeys = new Set();
+        for(const shape of boundaries) {
+          const pts = shape.kind === 'circle'
+            ? Array.from({length:12},(_,i)=>[shape.cx+Math.cos(i*Math.PI/6)*shape.r,shape.cy+Math.sin(i*Math.PI/6)*shape.r])
+            : [shape.a,shape.b];
+          for(const p of pts) {
+            const key = `${Math.round(p[0]*10)},${Math.round(p[1]*10)}`;
+            if (vertexKeys.has(key)) continue;
+            vertexKeys.add(key);
+            const a=Math.atan2(p[1]-oy,p[0]-ox);
+            addAngle(a-0.0015); addAngle(a); addAngle(a+0.0015);
+            if (angleMap.size >= 320) break;
+          }
+          if (angleMap.size >= 320) break;
+        }
+        for (const a of angleMap.values()) traceRay(tracedSegments, ox, oy, Math.cos(a), Math.sin(a), 1, 0, new Set(), 'primary');
+
+        // Direct/transmitted rays are drawn first at lower opacity. They remain
+        // white, but no longer saturate the canvas and hide coincident bounce paths.
+        ctx.globalCompositeOperation = 'source-over';
+        for (const seg of tracedSegments) {
+          if (seg.kind === 'reflected') continue;
+          ctx.globalAlpha = clamp(seg.energy * intensity * 0.32, 0.04, 0.38);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = seg.kind === 'primary' ? 0.7 : 0.9;
+          ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke();
+        }
+        // Draw every reflected segment last with a dark keyline and bright white
+        // core, making the actual outgoing direction visible even where paths overlap.
+        for (const seg of tracedSegments) {
+          if (seg.kind !== 'reflected') continue;
+          ctx.globalAlpha = clamp(seg.energy * intensity * 0.45, 0, 0.45); ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 3.4;
+          ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(seg.x1,seg.y1); ctx.lineTo(seg.x2,seg.y2); ctx.stroke();
+          ctx.globalAlpha = clamp(seg.energy * intensity, 0, 1);
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8;
+          ctx.beginPath(); ctx.moveTo(seg.x1,seg.y1); ctx.lineTo(seg.x2,seg.y2); ctx.stroke();
+        }
+        // The point light itself remains a solid white source, with no gradient.
+        ctx.globalAlpha = clamp(intensity,0,1);
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox,oy,2.2,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+    }
   };
 
   // ---------- lifecycle ----------
@@ -1917,6 +2103,7 @@ function renderInspector() {
         o.type === 'empty' ? '<span class="muted" style="grid-column:1/-1">Empty objects have no shape. Use them for controllers and data.</span>' :
           '<label for="f-rectLength">Length</label><input type="number" id="f-rectLength" data-k="rectLength" min="0" value="' + o.rectLength + '"><label for="f-rectHeight">Height</label><input type="number" id="f-rectHeight" data-k="rectHeight" min="0" value="' + o.rectHeight + '">') +
       (o.type !== 'empty' ? '<label for="f-color">Color</label><input type="color" id="f-color" data-k="color" value="' + o.color + '">' : '') + (o.type === 'light' ? '<label for="f-lightRadius">Light radius</label><input type="number" id="f-lightRadius" data-k="lightRadius" min="1" value="'+(o.lightRadius||260)+'"><label for="f-lightIntensity">Intensity (0–1)</label><input type="number" id="f-lightIntensity" data-k="lightIntensity" min="0" max="1" step="0.05" value="'+(o.lightIntensity??0.85)+'">' : '') + '</div></details>';
+    if (o.type !== 'light' && o.type !== 'empty') h += '<details class="sec" data-sec="mat"' + open('mat') + '><summary>Material</summary><div class="body"><label for="f-transparency">Transparency (0–1)</label><input type="number" id="f-transparency" data-k="transparency" min="0" max="1" step="0.05" value="'+(o.transparency??0)+'"><label for="f-reflectiveness">Reflectiveness (0–1)</label><input type="number" id="f-reflectiveness" data-k="reflectiveness" min="0" max="1" step="0.05" value="'+(o.reflectiveness??0)+'"><label for="f-refractiveness">Refractiveness (0–1)</label><input type="number" id="f-refractiveness" data-k="refractiveness" min="0" max="1" step="0.05" value="'+(o.refractiveness??0)+'"><span class="muted small" style="grid-column:1/-1">Transparency lets light pass through; reflectiveness creates bounce rays; refractiveness bends transmitted rays and requires transparency above 0.</span></div></details>';
   }
   h += '<details class="sec" data-sec="tx"' + open('tx') + '><summary>Textures (' + o.textures.length + ')</summary><div class="body flow">' +
     (o.textures.length ? '<div class="thumbs">' + o.textures.map(id => project.assets[id] ? '<div class="thumb" data-tex="' + id + '" title="Open in the texture maker"><img alt="" src="' + project.assets[id].data + '"><span>' + esc(project.assets[id].name) + '</span><button class="x" data-rm-tex="' + id + '">✕</button></div>' : '').join('') + '</div>' : '<span class="muted small">None. Scripts switch between them with “set texture to”.</span>') +
@@ -1941,7 +2128,7 @@ $('#insp').addEventListener('input', (e) => {
     const k = t.dataset.k; let v = t.type === 'checkbox' ? t.checked : t.type === 'number' ? (parseFloat(t.value) || 0) : t.value;
     if (k === 'parent') v = v || null;
     if (k === 'name') { v = v.replace(/[()<>\[\]]/g, ''); }
-    o[k] = v; commit(true); if (k === 'name' || k === 'parent' || k === 'visible') renderTree(); if (k === 'type') renderInspector(); drawVp();
+    if (['transparency','reflectiveness','refractiveness'].includes(k)) v = clamp(Number(v)||0,0,1); o[k] = v; commit(true); if (k === 'name' || k === 'parent' || k === 'visible') renderTree(); if (k === 'type') renderInspector(); drawVp();
   } else if (t.dataset.dval !== undefined) { o.data[t.dataset.dval] = isNaN(Number(t.value)) || t.value === '' ? t.value : Number(t.value); commit(true); }
 });
 $('#insp').addEventListener('change', (e) => {
@@ -2040,7 +2227,7 @@ function draw3D(){
   const objs=project.objects.filter(o=>o.type!=='global'&&o.visible).map(o=>({o,p:project3D(o.x,o.y,o.z,W,H)})).sort((a,b)=>b.p[2]-a.p[2]);
   for(const {o,p} of objs){
     const [sx,sy,,sc]=p; c.save();c.globalAlpha=1;c.fillStyle=o.color||'#478cbf';c.strokeStyle=o.id===selId?cssVar('--accent'):'rgba(255,255,255,.8)';c.lineWidth=o.id===selId?2.5:1;
-    if(o.type==='light'){c.strokeStyle=o.color||'#fff2c4';c.fillStyle=o.color||'#fff2c4';c.globalAlpha=.85;c.beginPath();c.arc(0,0,6,0,Math.PI*2);c.fill();c.globalAlpha=.65;c.beginPath();c.arc(0,0,Math.max(12,(o.lightRadius||260)*.12),0,Math.PI*2);c.stroke();}
+    if(o.type==='light'){c.strokeStyle=o.color||'#fff2c4';c.fillStyle=o.color||'#fff2c4';c.globalAlpha=.85;c.beginPath();c.arc(0,0,6,0,Math.PI*2);c.fill();}
     if(o.type==='camera'){
       // Runtime camera preview: draw a perspective frustum in the 3D editor.
       // The local viewing direction is -Z; the object's rotation orients the frustum.
@@ -2515,14 +2702,16 @@ function vecLoadAsset(a){vecShapes=vclone(a.vectorShapes||[]);vecSelected=[];vec
 /* ---------- play ---------- */
 let rt = null, raf = 0, playing = false, lastT = 0, acc = 0;
 const gcv = $('#game'); const gctx = gcv.getContext('2d');
-const runtimeOverlays = $('#runtimeOverlays'); let monitorEls = new Map(), inputRequest = null;
+const runtimeOverlays = $('#runtimeOverlays'); let monitorEls = new Map(), hiddenMonitors = new Set(), monitorsVisible = false, inputRequest = null;
+const monitorToggle = $('#toggleMonitors');
+monitorToggle.onclick = () => { monitorsVisible = !monitorsVisible; monitorToggle.textContent = monitorsVisible ? 'Hide variable monitors' : 'Show variable monitors'; for (const [id, el] of monitorEls) el.style.display = monitorsVisible && !hiddenMonitors.has(id) ? '' : 'none'; };
 function syncRuntimeOverlays(){
   if(!rt || !playing) return;
   const d=rt.monitorData();
   const wanted=[];
   Object.entries(d.globals||{}).forEach(([k,v])=>wanted.push(['var:'+k,'Variable  /  '+k,String(v)]));
   Object.entries(d.lists||{}).forEach(([k,v])=>wanted.push(['list:'+k,'List  /  '+k,(v||[]).map((x,i)=>(i+1)+'. '+String(x)).join('\n')||'(empty)']));
-  for(const [id,title,value] of wanted){let el=monitorEls.get(id);if(!el){el=document.createElement('section');el.className='gx-monitor';el.style.left=(12+(monitorEls.size%3)*230)+'px';el.style.top=(12+Math.floor(monitorEls.size/3)*118)+'px';el.innerHTML='<header><span></span><button type="button" title="Hide monitor" aria-label="Hide monitor">×</button></header><pre></pre>';el.querySelector('header span').textContent=title;const close=el.querySelector('button');close.addEventListener('pointerdown',e=>{e.stopPropagation();});close.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();el.remove();monitorEls.delete(id);});const h=el.querySelector('header');h.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;if(e.button!==0)return;e.preventDefault();const r=el.getBoundingClientRect(),base=runtimeOverlays.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;el.style.zIndex=String(10+Date.now()%100000);const move=q=>{el.style.left=Math.max(0,q.clientX-base.left-ox)+'px';el.style.top=Math.max(0,q.clientY-base.top-oy)+'px';};const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up,{once:true});});runtimeOverlays.appendChild(el);monitorEls.set(id,el);}el.querySelector('header span').textContent=title;el.querySelector('pre').textContent=value;}
+  for(const [id,title,value] of wanted){let el=monitorEls.get(id);if(hiddenMonitors.has(id)) continue;if(!el){el=document.createElement('section');el.className='gx-monitor';el.style.left=(12+(monitorEls.size%3)*230)+'px';el.style.top=(12+Math.floor(monitorEls.size/3)*118)+'px';el.innerHTML='<header><span></span><button type="button" title="Hide monitor" aria-label="Hide monitor">×</button></header><pre></pre>';el.querySelector('header span').textContent=title;const close=el.querySelector('button');close.addEventListener('pointerdown',e=>{e.stopPropagation();});close.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();el.remove();monitorEls.delete(id);hiddenMonitors.add(id);});const h=el.querySelector('header');h.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;if(e.button!==0)return;e.preventDefault();const r=el.getBoundingClientRect(),base=runtimeOverlays.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;el.style.zIndex=String(10+Date.now()%100000);const move=q=>{el.style.left=Math.max(0,q.clientX-base.left-ox)+'px';el.style.top=Math.max(0,q.clientY-base.top-oy)+'px';};const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up,{once:true});});runtimeOverlays.appendChild(el);monitorEls.set(id,el);el.style.display=monitorsVisible?'':'none';}el.querySelector('header span').textContent=title;el.querySelector('pre').textContent=value;}
   const req=rt.pendingInput(); if(req && inputRequest!==req){inputRequest=req;const shade=document.createElement('div');shade.className='gx-input-shade';shade.innerHTML='<form class="gx-input-card"><label></label><input autocomplete="off"><div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="primary" type="submit">OK</button></div></form>';shade.querySelector('label').textContent=req.prompt;const form=shade.querySelector('form'),inp=shade.querySelector('input');form.onsubmit=e=>{e.preventDefault();req.value=inp.value;req.done=true;shade.remove();inputRequest=null;};runtimeOverlays.appendChild(shade);inp.focus();}
   if(!rt.pendingInput()&&inputRequest){inputRequest=null;}
 }
@@ -2540,14 +2729,14 @@ async function play() {
   const snapProj = JSON.parse(JSON.stringify({ settings: project.settings, assets: project.assets, objects: project.objects, animations: project.animations || [] }));
   rt = new GX.Runtime(snapProj, { print: (m, l) => log(m, l) });
   try { rt.compileAll(); await rt.load(); rt.start(); } catch (e) { log('Could not start: ' + e.message, 'error'); return; }
-  playing = true; $('#btnPlay').disabled = true; $('#btnStop').disabled = false; setWs('game'); fitGame();
+  playing = true; monitorsVisible = false; hiddenMonitors.clear(); monitorEls.clear(); runtimeOverlays.innerHTML=''; monitorToggle.hidden = false; monitorToggle.textContent = 'Show variable monitors'; $('#btnPlay').disabled = true; $('#btnStop').disabled = false; setWs('game'); fitGame();
   $('#gameBar').textContent = 'Running  /  click the game to focus  /  F8 to stop'; gcv.tabIndex = 0; gcv.focus();
   lastT = performance.now(); acc = 0;
   const loop = (t) => { if (!playing) return; acc += Math.min(0.1, (t - lastT) / 1000); lastT = t; let n = 0; while (acc >= 1 / 60 && n++ < 5) { rt.step(1 / 60); acc -= 1 / 60; } rt.render(gctx); syncRuntimeOverlays(); raf = requestAnimationFrame(loop); };
   raf = requestAnimationFrame(loop);
 }
 function stop(quiet) {
-  if (!playing && !rt) return; playing = false; cancelAnimationFrame(raf); if (rt) { rt.stop(); } runtimeOverlays.innerHTML=''; monitorEls.clear(); inputRequest=null; $('#btnPlay').disabled = false; $('#btnStop').disabled = true;
+  if (!playing && !rt) return; playing = false; cancelAnimationFrame(raf); if (rt) { rt.stop(); } runtimeOverlays.innerHTML=''; monitorEls.clear(); hiddenMonitors.clear(); monitorsVisible=false; monitorToggle.hidden=true; inputRequest=null; $('#btnPlay').disabled = false; $('#btnStop').disabled = true;
   if (!quiet) { $('#gameBar').textContent = 'Stopped.'; log('— Stopped —', 'sys'); setWs('vp'); }
 }
 $('#btnPlay').onclick = play; $('#btnStop').onclick = () => stop(false);
